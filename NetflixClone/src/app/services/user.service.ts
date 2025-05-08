@@ -19,7 +19,7 @@ export class UserService {
   login(credentials: { email: string; password: string }): Promise<void> {
     return new Promise((resolve, reject) => {
       const validEmail = 'carrusca811@gmail.com';
-      const validPassword = 'guga1108';
+      const validPassword = 'Guga1108';
 
       if (
         credentials.email === validEmail &&
