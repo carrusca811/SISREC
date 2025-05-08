@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pymongo
+python-dotenv
+scikit-learn
+pandas
+motor
+pydantic[email]
+openpyxl
