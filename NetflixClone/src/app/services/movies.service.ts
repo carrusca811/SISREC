@@ -1,82 +1,50 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { MovieDetails } from '../interfaces/movie-details';
-import { Movies } from '../interfaces/movies';
-import { Credits, Cast } from '../interfaces/credits';
-
+import { Movie } from '../components/model/movie.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MoviesService {
 
-  private baseURL = "https://api.themoviedb.org/3";
-  private apikey = "06cc335abc6769f2ba982c824990faeb";
-  Movies!: Movies;
-  Movie!: MovieDetails;
-  Cast!: Credits;
+  private baseURL = 'http://localhost:8000';
 
-  constructor (private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-
-  sliderMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/movie/now_playing?api_key=${this.apikey}`);
+  /** Fetch All Movies */
+  getAllMovies(): Observable<Movie[]> {
+    return this.http.get<Movie[]>(`${this.baseURL}/movies`);
   }
 
-  getDiscoverMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&include_adult=false&include_video=true&page=1&`);
+  /** Fetch Movies by Genre */
+  getMoviesByGenre(genre: string): Observable<Movie[]> {
+    return this.http.get<Movie[]>(`${this.baseURL}/movies?genre=${genre}`);
   }
 
-
-  getTrendingMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/trending/movie/week?api_key=${this.apikey}`);
+  /** Fetch Movie Details by ID */
+  getMovieDetails(id: string): Observable<Movie> {
+    return this.http.get<Movie>(`${this.baseURL}/movies/${id}`);
   }
 
-  getActionMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=28`);
+  /** Fetch Trending Movies (Dummy) */
+  getTrendingMovies(): Observable<Movie[]> {
+    // Assuming that trending movies are just a filter by rating
+    return this.http.get<Movie[]>(`${this.baseURL}/movies?min_rating=8`);
   }
 
-  getAdventureMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=12`);
+  /** Search Movies by Title */
+  searchMovies(title: string): Observable<Movie[]> {
+    return this.http.get<Movie[]>(`${this.baseURL}/movies?title=${title}`);
   }
 
-  getAnimationMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=16`);
+  /** Get Movie Cast - Simulating as part of the movie object */
+  getMovieCast(id: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseURL}/movies/${id}/cast`);
   }
 
-  getComedyMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=35`);
-  }
-
-  getDocumentaries (): Observable<Movies>  {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=99`);
-  }
-
-
-  getScienceFictionMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=878`);
-  }
-
-  getThrillerMovies (): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/discover/movie?api_key=${this.apikey}&with_genres=53`);
-  }
-
-
-  getSearchMovie (id: any): Observable<Movies> {
-    console.log(id, 'movie#');
-    return this.http.get<Movies>(`${this.baseURL}/search/movie?api_key=${this.apikey}&query=${id.movieName}`);
-  }
-
-  getMovieDetails (id: any): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/movie/${id}?api_key=${this.apikey}`)
-  }
-
-  getMovieVideo (id: any): Observable<Movies> {
-    return this.http.get<Movies>(`${this.baseURL}/movie/${id}/videos?api_key=${this.apikey}`)
-  }
-
-  getMovieCast (id: any): Observable<Cast> {
-    return this.http.get<Cast>(`${this.baseURL}/movie/${id}/credits?api_key=${this.apikey}`)
+  /** Get Movie Video - Simulating as part of the movie object */
+  getMovieVideo(id: string): Observable<string> {
+    return this.http.get<string>(`${this.baseURL}/movies/${id}/video`);
   }
 }

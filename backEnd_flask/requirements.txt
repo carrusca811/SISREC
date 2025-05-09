@@ -6,4 +6,4 @@ scikit-learn
 pandas
 motor
 pydantic[email]
-openpyxl
+bcrypt

@@ -13,13 +13,13 @@ export class MoviesSliderComponent implements OnInit {
   constructor (private moviesService: MoviesService) { }
 
   ngOnInit (): void {
-    this.bannerData();
+    // this.bannerData();
   }
-
+/* 
   bannerData () {
     this.moviesService.sliderMovies().subscribe((result) => {
       this.bannerResult = result.results;
     });
-  }
+  } */
 
 }

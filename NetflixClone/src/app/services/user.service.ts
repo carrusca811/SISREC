@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Observer } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class UserService {
+  private baseURL = 'http://127.0.0.1:8000';
   private authState = new BehaviorSubject<boolean>(this.hasUser());
+
+  constructor(private http: HttpClient, private router: Router) {}
 
   get isLoggedIn$(): Observable<boolean> {
     return this.authState.asObservable();
@@ -18,19 +22,32 @@ export class UserService {
 
   login(credentials: { email: string; password: string }): Promise<void> {
     return new Promise((resolve, reject) => {
-      const validEmail = 'carrusca811@gmail.com';
-      const validPassword = 'Guga1108';
+      this.http.post(`${this.baseURL}/login`, credentials).subscribe({
+        next: (response: any) => {
+          localStorage.setItem('user', JSON.stringify(response));
+          this.authState.next(true);
+          resolve();
+        },
+        error: (err) => {
+          console.error('Login error:', err);
+          reject('Credenciais inválidas');
+        }
+      });
+    });
+  }
 
-      if (
-        credentials.email === validEmail &&
-        credentials.password === validPassword
-      ) {
-        localStorage.setItem('user', credentials.email);
-        this.authState.next(true);
-        resolve();
-      } else {
-        reject('Credenciais inválidas');
-      }
+  register(user: { email: string; password: string; preference_genre: string[]; preference_actor: string[] }): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.http.post(`${this.baseURL}/register`, user).subscribe({
+        next: (response: any) => {
+          console.log('Registration successful:', response);
+          resolve();
+        },
+        error: (err) => {
+          console.error('Registration error:', err);
+          reject('Erro ao registar utilizador');
+        }
+      });
     });
   }
 
@@ -38,11 +55,13 @@ export class UserService {
     return new Promise((resolve) => {
       localStorage.removeItem('user');
       this.authState.next(false);
+      this.router.navigate(['/login']);
       resolve();
     });
   }
 
-  getCurrentUser(): string | null {
-    return localStorage.getItem('user');
+  getCurrentUser(): any | null {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   }
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { MoviesService } from 'src/app/services/movies.service';
+import { MoviesService } from '../../services/movies.service';
+import { Movie } from 'src/app/components/model/movie.model';
 
 @Component({
   selector: 'app-movie-details',
@@ -10,57 +10,50 @@ import { MoviesService } from 'src/app/services/movies.service';
 })
 export class MovieDetailsComponent implements OnInit {
 
-  getMovieDetailResult?: any;
-  getMovieVideoResult?: any;
-  getMovieCastResult?: any;
+  movie: Movie | null = null;
+  cast: string[] = [];
+  videoUrl: string = '';
+  errorMessage: string = '';
 
-  constructor (private moviesService: MoviesService, private router: ActivatedRoute, private title: Title, private meta: Meta) { }
+  constructor(
+    private moviesService: MoviesService,
+    private route: ActivatedRoute
+  ) {}
 
-  ngOnInit (): void {
-    let getParamId = this.router.snapshot.paramMap.get('id');
-    console.log(getParamId, 'getparamid#');
-
-    this.getMovie(getParamId);
-    this.getVideo(getParamId);
-    this.getMovieCast(getParamId);
+  ngOnInit(): void {
+    const movieId = this.route.snapshot.paramMap.get('id');
+    if (movieId) {
+      this.getMovieDetails(movieId);
+    }
   }
 
-  getMovie (id: any) {
-    this.moviesService.getMovieDetails(id).subscribe(async (result) => {
-      console.log(result, 'getmoviedetails#');
-      this.getMovieDetailResult = await result;
-
-      // updatetags
-      this.title.setTitle(`${this.getMovieDetailResult.original_title} | ${this.getMovieDetailResult.tagline}`);
-      this.meta.updateTag({ name: 'title', content: this.getMovieDetailResult.original_title });
-      this.meta.updateTag({ name: 'description', content: this.getMovieDetailResult.overview });
-
-      // facebook
-      this.meta.updateTag({ property: 'og:type', content: "website" });
-      this.meta.updateTag({ property: 'og:url', content: `` });
-      this.meta.updateTag({ property: 'og:title', content: this.getMovieDetailResult.original_title });
-      this.meta.updateTag({ property: 'og:description', content: this.getMovieDetailResult.overview });
-      this.meta.updateTag({ property: 'og:image', content: `https://image.tmdb.org/t/p/original/${this.getMovieDetailResult.backdrop_path}` });
-
+  getMovieDetails(id: string): void {
+    this.moviesService.getMovieDetails(id).subscribe({
+      next: (data) => {
+        this.movie = data;
+      },
+      error: (err) => {
+        this.errorMessage = 'Error fetching movie details';
+        console.error(err);
+      }
     });
-  }
 
-  getVideo (id: any) {
-    this.moviesService.getMovieVideo(id).subscribe((result) => {
-      console.log(result, 'getMovieVideo#');
-      result.results.forEach((element: any) => {
-        if (element.type == "Trailer") {
-          this.getMovieVideoResult = element.key;
-        }
-      });
-
+    this.moviesService.getMovieCast(id).subscribe({
+      next: (data) => {
+        this.cast = data;
+      },
+      error: (err) => {
+        console.error('Error fetching cast:', err);
+      }
     });
-  }
 
-  getMovieCast (id: any) {
-    this.moviesService.getMovieCast(id).subscribe((result) => {
-      console.log(result, 'movieCast#');
-      this.getMovieCastResult = result.cast;
+    this.moviesService.getMovieVideo(id).subscribe({
+      next: (data) => {
+        this.videoUrl = data;
+      },
+      error: (err) => {
+        console.error('Error fetching video:', err);
+      }
     });
   }
 }

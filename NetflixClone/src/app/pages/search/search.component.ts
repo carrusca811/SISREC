@@ -20,14 +20,12 @@ export class SearchComponent implements OnInit {
     'movieName': new FormControl(null)
   });
 
-  onSubmit () {
+/*   onSubmit () {
     console.log(this.searchForm.value, 'searchform#');
     this.moviesService.getSearchMovie(this.searchForm.value).subscribe((result) => {
-      /* TODO: REFACTORING AND CONSOLE.LOG */
       console.log(result, 'searchmovie##');
       this.searchResult = result.results;
       this.searchForm.reset();
     });
-  }
-
+  } */
 }

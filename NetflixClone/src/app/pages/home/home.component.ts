@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { Movie } from 'src/app/interfaces/movies';
+import { Movie } from 'src/app/components/model/movie.model';
 import { MoviesService } from 'src/app/services/movies.service';
 import { UserService } from 'src/app/services/user.service';
 
@@ -24,7 +24,13 @@ export class HomeComponent implements OnInit {
 
   constructor (private moviesService: MoviesService, private userService: UserService, private title: Title, private meta: Meta, private router: Router) { }
 
-  ngOnInit (): void {
+  ngOnInit(): void {
+      
+    
+  }
+
+
+  /* ngOnInit (): void {
     this.trendingMovies();
     this.discoverMovies();
     this.actionMovies();
@@ -91,4 +97,7 @@ export class HomeComponent implements OnInit {
       this.thrillerMovieResults = result.results;
     });
   }
+}
+ */
+
 }

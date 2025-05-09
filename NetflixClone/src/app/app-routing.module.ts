@@ -13,7 +13,7 @@ const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
-    canActivate: [AuthGuard]
+    /* canActivate: [AuthGuard] */
   },
   {
     path: 'search',
@@ -26,7 +26,7 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   { path: '', pathMatch: 'full', redirectTo: '/home' },
-  { path: '**', pathMatch: 'full', redirectTo: '/home' }
+  { path: '**', redirectTo: '/home' }
 ];
 
 @NgModule({
