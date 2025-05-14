@@ -36,20 +36,11 @@ export class UserService {
     });
   }
 
-  register(user: { email: string; password: string; preference_genre: string[]; preference_actor: string[] }): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.http.post(`${this.baseURL}/register`, user).subscribe({
-        next: (response: any) => {
-          console.log('Registration successful:', response);
-          resolve();
-        },
-        error: (err) => {
-          console.error('Registration error:', err);
-          reject('Erro ao registar utilizador');
-        }
-      });
-    });
+  register(user: { email: string, password: string, preference_genre?: string[], preference_actor?: string[] }): Promise<any> {
+    const url = `${this.baseURL}/register`;
+    return this.http.post(url, user).toPromise();
   }
+  
 
   logout(): Promise<void> {
     return new Promise((resolve) => {
@@ -64,4 +55,11 @@ export class UserService {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   }
+
+
+  updatePreferences(preferences: { user_id: string, preference_genre: string[], preference_actor: string[] }): Promise<any> {
+    const url = `${this.baseURL}/update-preferences`;
+    return this.http.put(url, preferences).toPromise();
+  }
+  
 }
