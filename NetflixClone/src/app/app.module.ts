@@ -1,41 +1,47 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
-import { AppRoutingModule } from './app-routing.module';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideHttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './pages/home/home.component';
-import { MovieDetailsComponent } from './pages/movie-details/movie-details.component';
 import { SearchComponent } from './pages/search/search.component';
-import { NavbarComponent } from './shared/navbar/navbar.component';
-import { MoviesSliderComponent } from './pages/movies-slider/movies-slider.component';
-import { LoginComponent } from './components/login/login.component';
+import { MovieDetailsComponent } from './pages/movie-details/movie-details.component';
 import { RegisterComponent } from './components/register/register.component';
+import { LoginComponent } from './components/login/login.component';
 
-import { MoviesService } from './services/movies.service';
-import { AuthGuard } from './auth.guard';
+// PrimeNG Modules
+import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { AppRoutingModule } from './app-routing.module';
+import { NavbarComponent } from './shared/navbar/navbar.component';
 
-@NgModule({ declarations: [
-        AppComponent,
-        HomeComponent,
-        MovieDetailsComponent,
-        SearchComponent,
-        NavbarComponent,
-        MoviesSliderComponent,
-        LoginComponent,
-        RegisterComponent,
-        BrowserModule,
-        FormsModule,
-        DropdownModule,
-        BrowserAnimationsModule
-    ],
-    bootstrap: [AppComponent], imports: [BrowserModule,
-        AppRoutingModule,
-        ReactiveFormsModule], providers: [
-        MoviesService,
-        AuthGuard,
-        provideHttpClient(withInterceptorsFromDi())
-    ] })
+@NgModule({
+  declarations: [
+    AppComponent,
+    HomeComponent,
+    SearchComponent,
+    MovieDetailsComponent,
+    RegisterComponent,
+    LoginComponent,
+    NavbarComponent
+  ],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,  // ✅ Required for PrimeNG animations
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+    AppRoutingModule,
+    DropdownModule,
+    MultiSelectModule,
+  ],
+  providers: [
+    provideHttpClient(),
+  ],
+  bootstrap: [AppComponent]
+})
 export class AppModule {}
+

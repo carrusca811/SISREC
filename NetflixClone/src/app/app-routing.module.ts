@@ -1,11 +1,11 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './pages/home/home.component';
-import { SearchComponent } from './pages/search/search.component';
-import { MovieDetailsComponent } from './pages/movie-details/movie-details.component';
-import { RegisterComponent } from './components/register/register.component';
-import { LoginComponent } from './components/login/login.component';
-import { AuthGuard } from './auth.guard';
+import { NgModule } from "@angular/core";
+import { AuthGuard } from "./auth.guard";
+import { SearchComponent } from "./pages/search/search.component";
+import { MovieDetailsComponent } from "./pages/movie-details/movie-details.component";
+import { HomeComponent } from "./pages/home/home.component";
+import { RegisterComponent } from "./components/register/register.component";
+import { LoginComponent } from "./components/login/login.component";
+import { RouterModule, Routes } from "@angular/router";
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },

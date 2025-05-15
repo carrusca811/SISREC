@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { MoviesService } from 'src/app/services/movies.service';
 
 @Component({
-  selector: 'app-movies-slider',
-  templateUrl: './movies-slider.component.html',
-  styleUrls: ['./movies-slider.component.scss']
+    selector: 'app-movies-slider',
+    templateUrl: './movies-slider.component.html',
+    styleUrls: ['./movies-slider.component.scss'],
+    standalone: false
 })
 export class MoviesSliderComponent implements OnInit {
 

@@ -3,18 +3,12 @@
   background-repeat: no-repeat;
   background-image: url(../../../assets/images/login-background.jpg);
   height: 100vh;
+
   .container {
     padding-top: 6%;
     width: 20%;
     min-width: 350px;
   }
-  .btn {
-    padding: 7px 20px;
-    color: white;
-    &:hover {
-      font-weight: bold;
-    }
-  }
 
   .btn {
     padding: 7px 20px;
@@ -24,35 +18,150 @@
     }
   }
 
-  span {
-    &.helper-text {
-      font-size: 11px;
-    }
+  span.helper-text {
+    font-size: 11px;
   }
-  p {
-    &.login {
-      margin-top: 10px;
-      font-size: 20px;
-      text-transform: capitalize;
-    }
+
+  p.login {
+    margin-top: 10px;
+    font-size: 20px;
+    text-transform: capitalize;
   }
 
   .sign-up {
-      font-size: 18px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
 @media only screen and (max-width: 991px) {
-  .register {
-    .container {
-        padding-top: 240px;
-        h3 {
-          margin-bottom: 0px!important;
-        }
-      }
+  .register .container {
+    padding-top: 240px;
+    h3 {
+      margin-bottom: 0px !important;
+    }
   }
+}
 
+.preferences-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #141414;
+}
+
+.preferences-content {
+  background-color: #2c2c2c;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 500px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.3s ease;
+}
+
+.preferences-title {
+  font-size: 1.8rem;
+  color: #e50914;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.preferences-section {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.preferences-label {
+  font-size: 1rem;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: bold;
+}
+
+.custom-dropdown {
+  background-color: #333;
+  padding: 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  color: #fff;
+  position: relative;
+}
+
+.dropdown-list {
+  background-color: #444;
+  position: absolute;
+  width: 100%;
+  max-height: 250px;
+  overflow-y: auto;
+  border-radius: 6px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 0.5rem 0;
+  animation: slideDown 0.3s ease;
+}
+
+.search-input {
+  width: calc(100% - 20px);
+  padding: 0.5rem;
+  margin: 0.5rem auto;
+  background-color: #333;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  color: #fff;
+}
+
+.dropdown-item:hover {
+  background-color: #e50914;
+}
+
+.dropdown-item.selected {
+  background-color: #b00610;
+}
+
+.btn-save-preferences {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #e50914;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+}
+
+.btn-save-preferences:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.btn-save-preferences:hover:not(:disabled) {
+  background-color: #b00610;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

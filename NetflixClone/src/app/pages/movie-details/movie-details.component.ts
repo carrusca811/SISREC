@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { MoviesService } from '../../services/movies.service';
 import { Movie } from 'src/app/components/model/movie.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'app-movie-details',
-  templateUrl: './movie-details.component.html',
-  styleUrls: ['./movie-details.component.scss']
+    selector: 'app-movie-details',
+    templateUrl: './movie-details.component.html',
+    styleUrls: ['./movie-details.component.scss'],
+    standalone: false
 })
 export class MovieDetailsComponent implements OnInit {
 

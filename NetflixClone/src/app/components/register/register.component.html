@@ -1,67 +1,99 @@
 <section class="register" *ngIf="!isSelectingPreferences">
   <div class="container">
     <h3 class="text-white text-center p-4 mb-4 fw-bold">Register</h3>
-    <form novalidate [formGroup]="formRegister" (ngSubmit)="onSubmit()">
+    <form [formGroup]="formRegister" (ngSubmit)="onSubmit()" novalidate>
       <div class="mb-3">
         <label class="form-label text-white fw-bold">* Email</label>
-        <input type="text" class="form-control" placeholder="Introduce your email" formControlName="email" autocomplete="off">
+        <input type="text" class="form-control" placeholder="Enter Email" formControlName="email" autocomplete="off">
       </div>
       
       <div class="mb-3">
         <label class="form-label text-white fw-bold">* Password</label>
-        <input type="password" class="form-control" placeholder="Introduce your password" formControlName="password" autocomplete="off">
+        <input type="password" class="form-control" placeholder="Enter Password" formControlName="password" autocomplete="off">
       </div>
 
       <div class="d-flex justify-content-center mb-3">
         <button type="submit" class="btn btn-success fw-bold">Register</button>
       </div>
 
-      <div class="text-center mt-3">
-        <span class="text-danger" *ngIf="registerError">{{ registerError }}</span>
+      <div class="text-center mt-3 text-danger" *ngIf="registerError">{{ registerError }}</div>
+    </form>
+  </div>
+</section>
+<section class="register" *ngIf="!isSelectingPreferences">
+  <div class="container">
+    <h3 class="text-white text-center p-4 mb-4 fw-bold">Register</h3>
+    <form [formGroup]="formRegister" (ngSubmit)="onSubmit()" novalidate>
+      <div class="mb-3">
+        <label class="form-label text-white fw-bold">* Email</label>
+        <input type="text" class="form-control" placeholder="Enter Email" formControlName="email" autocomplete="off">
       </div>
+      
+      <div class="mb-3">
+        <label class="form-label text-white fw-bold">* Password</label>
+        <input type="password" class="form-control" placeholder="Enter Password" formControlName="password" autocomplete="off">
+      </div>
+
+      <div class="d-flex justify-content-center mb-3">
+        <button type="submit" class="btn btn-success fw-bold">Register</button>
+      </div>
+
+      <div class="text-center mt-3 text-danger" *ngIf="registerError">{{ registerError }}</div>
     </form>
   </div>
 </section>
 
-<!-- Preferences Selection Section -->
-<section class="preferences" *ngIf="isSelectingPreferences">
-  <div class="container">
-    <h3 class="text-white text-center p-4 mb-4 fw-bold">Choose Your Favorites</h3>
+<section class="preferences-container" *ngIf="isSelectingPreferences">
+  <div class="preferences-content">
+    <h2 class="preferences-title">Choose Your Favorites</h2>
 
-    <div class="mb-3">
-      <label class="form-label text-white fw-bold">Select 2 Genres:</label>
-      <div class="d-flex flex-wrap">
-        <button 
-          *ngFor="let genre of availableGenres" 
-          class="btn btn-outline-light me-2 mb-2" 
-          [class.active]="selectedGenres.includes(genre)"
-          (click)="toggleSelection(genre, 'genre')"
-        >
-          {{ genre }}
-        </button>
+    <div class="preferences-section">
+      <label class="preferences-label">Select 2 Genres:</label>
+      <div class="custom-dropdown" (click)="toggleDropdown('genre')">
+        <span class="dropdown-label">{{ selectedGenres.length ? selectedGenres.join(', ') : 'Select Genres' }}</span>
+        <div class="dropdown-icon">&#9662;</div>
+      </div>
+      <div class="dropdown-list" *ngIf="showGenreDropdown">
+        <div 
+          class="dropdown-item" 
+          *ngFor="let genre of filteredGenres" 
+          [class.selected]="selectedGenres.includes(genre.value)"
+          (click)="selectItem(genre.value, 'genre')">
+          {{ genre.label }}
+        </div>
       </div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label text-white fw-bold">Select 2 Actors:</label>
-      <div class="d-flex flex-wrap">
-        <button 
-          *ngFor="let actor of availableActors" 
-          class="btn btn-outline-light me-2 mb-2" 
-          [class.active]="selectedActors.includes(actor)"
-          (click)="toggleSelection(actor, 'actor')"
-        >
-          {{ actor }}
-        </button>
+    <div class="preferences-section">
+      <label class="preferences-label">Select 2 Actors:</label>
+      <div class="custom-dropdown" (click)="toggleDropdown('actor')">
+        <span class="dropdown-label">{{ selectedActors.length ? selectedActors.join(', ') : 'Select Actors' }}</span>
+        <div class="dropdown-icon">&#9662;</div>
+      </div>
+      <div class="dropdown-list" *ngIf="showActorDropdown">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search..." 
+          [(ngModel)]="actorSearchQuery" 
+          (input)="filterOptions('actor')" 
+        />
+        <div 
+          class="dropdown-item" 
+          *ngFor="let actor of filteredActors" 
+          [class.selected]="selectedActors.includes(actor.value)"
+          (click)="selectItem(actor.value, 'actor')">
+          {{ actor.label }}
+        </div>
       </div>
     </div>
 
-    <div class="d-flex justify-content-center mb-3">
-      <button type="button" class="btn btn-success fw-bold" (click)="savePreferences()">Save Preferences</button>
-    </div>
-
-    <div class="text-center mt-3">
-      <span class="text-danger" *ngIf="registerError">{{ registerError }}</span>
-    </div>
+    <button 
+      type="button" 
+      class="btn-save-preferences" 
+      [disabled]="selectedGenres.length !== 2 || selectedActors.length !== 2" 
+      (click)="savePreferences()">
+      Save Preferences
+    </button>
   </div>
 </section>

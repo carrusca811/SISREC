@@ -1,12 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+
 import { UserService } from 'src/app/services/user.service';
 
+interface Option {
+  label: string;
+  value: string;
+}
+
 @Component({
-  selector: 'app-register',
-  templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss']
+    selector: 'app-register',
+    templateUrl: './register.component.html',
+    styleUrls: ['./register.component.scss'],
+    standalone: false
 })
 export class RegisterComponent implements OnInit {
 
@@ -15,6 +22,12 @@ export class RegisterComponent implements OnInit {
   isSelectingPreferences: boolean = false;
   selectedGenres: string[] = [];
   selectedActors: string[] = [];
+  showGenreDropdown: boolean = false;
+  showActorDropdown: boolean = false;
+  genreSearchQuery: string = '';
+actorSearchQuery: string = '';
+filteredGenres: Option[] = [];
+filteredActors: Option[] = [];
 
   availableGenres: string[] = ["Drama","Comedy","Crime","Action","Thriller","Romance","Biography","Mystery","Animation"];
   availableActors: string[] =  [
@@ -60,91 +73,125 @@ export class RegisterComponent implements OnInit {
     "Predrag 'Miki' Manojlovic", "Vincent Cassel", "Irène Jacob", "Brigitte Lin", "Sam Neill",
     "Leslie Cheung", "Gong Li", "Wil Wheaton", "Charlie Sheen", "Harry Dean Stanton"
   ];
+  genreOptions: Option[] = [];
+  actorOptions: Option[] = [];
 
   constructor(private service: UserService, private router: Router) {
     this.formRegister = new FormGroup({
       email: new FormControl('', [Validators.required, Validators.email]),
       password: new FormControl('', [Validators.required, Validators.minLength(6)]),
-      preference_genre: new FormControl([]),
-      preference_actor: new FormControl([])
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+      this.genreOptions = this.availableGenres.map(genre => ({ label: genre, value: genre }));
+      this.actorOptions = this.availableActors.map(actor => ({ label: actor, value: actor }));
+    
+      this.filteredGenres = this.genreOptions;
+      this.filteredActors = this.actorOptions;
+    }
+    
+    filterOptions(type: 'genre' | 'actor'): void {
+      const query = type === 'genre' ? this.genreSearchQuery.toLowerCase() : this.actorSearchQuery.toLowerCase();
+      const options = type === 'genre' ? this.genreOptions : this.actorOptions;
+    
+      const filtered = options.filter(option =>
+        option.label.toLowerCase().includes(query)
+      );
+    
+      if (type === 'genre') {
+        this.filteredGenres = filtered;
+      } else {
+        this.filteredActors = filtered;
+      }
+    }
+  
 
   onSubmit(): void {
     if (this.formRegister.valid) {
       const { email, password } = this.formRegister.value;
-  
+
       const user = {
         email,
         password,
         preference_genre: [],
         preference_actor: []
       };
-  
+
       this.service.register(user)
-        .then((response) => {
+        .then(response => {
           this.registerError = null;
-  
-          // Armazena o user_id para a seleção de preferências
           const userId = response.id;
           sessionStorage.setItem('user_id', userId);
           this.isSelectingPreferences = true;
         })
-        .catch((err) => {
-          this.registerError = err.message || 'Erro ao registar utilizador.';
+        .catch(err => {
+          this.registerError = err.message || 'Error during registration.';
         });
     } else {
-      this.registerError = 'Preencha todos os campos corretamente.';
+      this.registerError = 'Please fill out all fields correctly.';
     }
   }
-  
+
   savePreferences(): void {
     const userId = sessionStorage.getItem('user_id');
-  
+
     if (!userId) {
-      this.registerError = 'ID do utilizador não encontrado.';
+      this.registerError = 'User ID not found.';
       return;
     }
-  
-    if (this.selectedGenres.length === 2 && this.selectedActors.length === 2) {
-      const updatedUser = {
-        user_id: userId,
-        preference_genre: this.selectedGenres,
-        preference_actor: this.selectedActors
-      };
-  
-      this.service.updatePreferences(updatedUser)
-        .then(() => {
-          sessionStorage.removeItem('user_id');
-          this.isSelectingPreferences = false;
-          this.router.navigate(['/login']);
-        })
-        .catch((err) => {
-          this.registerError = err.message || 'Erro ao atualizar preferências.';
-        });
-    } else {
-      this.registerError = 'Selecione exatamente 2 géneros e 2 atores.';
+
+    if (this.selectedGenres.length !== 2 || this.selectedActors.length !== 2) {
+      this.registerError = 'Select exactly 2 genres and 2 actors.';
+      return;
     }
+
+    const preferences = {
+      user_id: userId,
+      preference_genre: this.selectedGenres,
+      preference_actor: this.selectedActors,
+    };
+
+    this.service.updatePreferences(preferences)
+      .then(() => {
+        sessionStorage.removeItem('user_id');
+        this.isSelectingPreferences = false;
+        this.router.navigate(['/login']);
+      })
+      .catch(err => {
+        this.registerError = err.message || 'Error updating preferences.';
+      });
   }
-  
 
 
-  toggleSelection(item: string, type: 'genre' | 'actor'): void {
-    if (type === 'genre') {
-      if (this.selectedGenres.includes(item)) {
-        this.selectedGenres = this.selectedGenres.filter(genre => genre !== item);
-      } else if (this.selectedGenres.length < 2) {
-        this.selectedGenres.push(item);
-      }
-    } else {
-      if (this.selectedActors.includes(item)) {
-        this.selectedActors = this.selectedActors.filter(actor => actor !== item);
-      } else if (this.selectedActors.length < 2) {
-        this.selectedActors.push(item);
-      }
-    }
-  }
+
   
+toggleDropdown(type: 'genre' | 'actor'): void {
+  if (type === 'genre') {
+    this.showGenreDropdown = !this.showGenreDropdown;
+    this.showActorDropdown = false;
+  } else {
+    this.showActorDropdown = !this.showActorDropdown;
+    this.showGenreDropdown = false;
+  }
 }
+
+selectItem(item: string, type: 'genre' | 'actor'): void {
+  const selection = type === 'genre' ? this.selectedGenres : this.selectedActors;
+
+  if (selection.includes(item)) {
+    const index = selection.indexOf(item);
+    selection.splice(index, 1);
+  } else if (selection.length < 2) {
+    selection.push(item);
+  }
+
+  if (type === 'genre') {
+    this.selectedGenres = [...selection];
+  } else {
+    this.selectedActors = [...selection];
+  }
+}
+}
+
+

@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 })
 export class AuthGuard  {
 
-  constructor(private router: Router) {}
+  constructor(private  router : Router) {}
 
   canActivate(): boolean {
     const user = localStorage.getItem('user');
