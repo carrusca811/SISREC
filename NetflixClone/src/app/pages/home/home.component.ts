@@ -2,18 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Movie } from 'src/app/components/model/movie.model';
+import { AppStorageService } from 'src/app/services/app.storage.service';
 import { MoviesService } from 'src/app/services/movies.service';
 import { UserService } from 'src/app/services/user.service';
 
 @Component({
-    selector: 'app-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss'],
-    standalone: false
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss'],
+  standalone: false,
 })
 export class HomeComponent implements OnInit {
-
-  trendingMoviesResults?: Movie[] = [];
+/*   trendingMoviesResults?: Movie[] = [];
   discoverMoviesResults?: Movie[] = [];
   actionMovieResults?: Movie[] = [];
   adventureMovieResults?: Movie[] = [];
@@ -21,15 +21,48 @@ export class HomeComponent implements OnInit {
   comedyMovieResults?: Movie[] = [];
   documentaryMovieResults?: Movie[] = [];
   sciencefictionMovieResults?: Movie[] = [];
-  thrillerMovieResults?: Movie[] = [];
+  thrillerMovieResults?: Movie[] = []; */
+  nonPersonalizedMovies: { genre: string; top_movies: Movie[] }[] = [];
 
-  constructor (private moviesService: MoviesService, private userService: UserService, private title: Title, private meta: Meta, private router: Router) { }
+  user: any;
+
+  constructor(
+    private moviesService: MoviesService,
+    private userService: UserService,
+    private title: Title,
+    private meta: Meta,
+    private router: Router,
+    private storageService: AppStorageService
+  ) {}
 
   ngOnInit(): void {
-      
-    
+    this.verActiveUser();
   }
 
+  verActiveUser(): void {
+    this.user = this.storageService.getItem('user');
+
+    if (this.user && this.user.email.length > 0) {
+      console.log('personalized');
+    } else {
+      this.loadNonPersonalizedRecommendations();
+    }
+  }
+  loadNonPersonalizedRecommendations() {
+    this.moviesService.getNonPersonalizedRecommendations().subscribe({
+      next: (result) => {
+        this.nonPersonalizedMovies = result;
+      },
+      error: (err) => {
+        console.error('Error loading recommendations:', err);
+      }
+    });
+  }
+  
+  onImageError(event: Event) {
+    const target = event.target as HTMLImageElement;
+    target.src = 'assets/movies/default.jpg';
+  }
 
   /* ngOnInit (): void {
     this.trendingMovies();
@@ -100,5 +133,4 @@ export class HomeComponent implements OnInit {
   }
 }
  */
-
 }

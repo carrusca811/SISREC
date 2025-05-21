@@ -12,6 +12,12 @@ export class MoviesService {
 
   constructor(private http: HttpClient) {}
 
+
+  getNonPersonalizedRecommendations(): Observable<any> {
+    return this.http.get<any>(`${this.baseURL}/movies/non_personalized_recommendations`);
+  }
+
+
   /** Fetch All Movies */
   getAllMovies(): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${this.baseURL}/movies`);

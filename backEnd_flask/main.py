@@ -8,15 +8,20 @@ from database import users_collection, movies_collection
 from bson import ObjectId
 from fastapi.middleware.cors import CORSMiddleware
 
+from utils.nonPersonalized import get_top_movies_per_genre
+
 app = FastAPI()
+
+from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Ajusta isso para restringir os domínios permitidos
+    allow_origins=["http://localhost:4200"],
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos os métodos (GET, POST, OPTIONS, etc.)
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 def convert_to_str(value):
     """ Convert any value to string, except for lists """
@@ -28,22 +33,24 @@ def convert_to_str(value):
         return ""
     return str(value)
 
-def movie_serializer(movie) -> dict:
-    """ Serializer that converts all fields to strings """
+from bson import ObjectId
+
+def movie_serializer(movie):
     return {
         "id": str(movie["_id"]),
-        "title": convert_to_str(movie.get("title")),
-        "year": convert_to_str(movie.get("year")),
-        "certificate": convert_to_str(movie.get("certificate")),
-        "runtime": convert_to_str(movie.get("runtime")),
-        "genres": convert_to_str(movie.get("genres")),
-        "imdb_rating": convert_to_str(movie.get("imdb_rating")),
-        "meta_score": convert_to_str(movie.get("meta_score")),
-        "director": convert_to_str(movie.get("director")),
-        "cast": convert_to_str(movie.get("cast")),
-        "votes": convert_to_str(movie.get("votes")),
-        "gross": convert_to_str(movie.get("gross"))
+        "title": movie["title"],
+        "year": movie["year"],
+        "certificate": movie["certificate"],
+        "runtime": movie["runtime"],
+        "genres": movie["genres"],
+        "imdb_rating": movie["imdb_rating"],
+        "meta_score": movie["meta_score"],
+        "director": movie["director"],
+        "cast": movie["cast"],
+        "votes": movie["votes"],
+        "gross": movie["gross"]
     }
+
 
 class UserRegister(BaseModel):
     email: str
@@ -111,6 +118,18 @@ async def get_movies():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@app.get("/movies/non_personalized_recommendations", response_model=List[dict])
+async def get_non_personalized_movies():
+    try:
+        results = await get_top_movies_per_genre(movies_collection)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+    
 
 @app.put("/update-preferences")
 async def update_preferences(preferences: dict):
