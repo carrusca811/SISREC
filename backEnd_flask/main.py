@@ -1,17 +1,19 @@
 import bcrypt
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from typing import List, Optional
 from pydantic import EmailStr, BaseModel
+from models import movie_serializer
 from models.users_model import UserRegister, UserLogin
 from models.movie_model import Movie
 from database import users_collection, movies_collection
 from bson import ObjectId
 from fastapi.middleware.cors import CORSMiddleware
-
+from models.movie_serializer import movie_serializer
+from utils.cold_start_utils import cold_start_python_filter
 from utils.nonPersonalized import get_top_movies_per_genre
-
 app = FastAPI()
-
+from fastapi import Query, Path
+import traceback
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -32,25 +34,6 @@ def convert_to_str(value):
     if value is None:
         return ""
     return str(value)
-
-from bson import ObjectId
-
-def movie_serializer(movie):
-    return {
-        "id": str(movie["_id"]),
-        "title": movie["title"],
-        "year": movie["year"],
-        "certificate": movie["certificate"],
-        "runtime": movie["runtime"],
-        "genres": movie["genres"],
-        "imdb_rating": movie["imdb_rating"],
-        "meta_score": movie["meta_score"],
-        "director": movie["director"],
-        "cast": movie["cast"],
-        "votes": movie["votes"],
-        "gross": movie["gross"]
-    }
-
 
 class UserRegister(BaseModel):
     email: str
@@ -107,7 +90,9 @@ async def login(user: UserLogin):
 
     return {
         "id": str(existing_user["_id"]),
-        "email": existing_user["email"]
+        "email": existing_user["email"],
+        "preference_genre": existing_user.get("preference_genre", []),
+        "preference_actor": existing_user.get("preference_actor", []),
     }
 
 @app.get("/movies", response_model=List[Movie])
@@ -155,3 +140,50 @@ async def update_preferences(preferences: dict):
         return {"message": "Preferences updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
+@app.get("/movies/cold_start_recommendations", response_model=List[dict])
+async def cold_start_recommendations(
+    genres: List[str] = Query(..., min_length=1),
+    actors: List[str] = Query(..., min_length=1),
+    top_n: int = 1000
+):
+    try:
+        return await cold_start_python_filter(movies_collection, genres, actors, top_n)
+    except Exception as e:
+        print("🔥 ERRO NO BACKEND:", traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/movies/search", response_model=List[dict])
+async def search_movies_by_name(name: str = Query(..., min_length=1)):
+    try:
+        query = {"title": {"$regex": name, "$options": "i"}}
+        movies_cursor = movies_collection.find(query)
+
+        results = []
+        async for movie in movies_cursor:
+            results.append(movie_serializer(movie))
+        return results
+
+    except Exception as e:
+        import traceback
+        print("🔥 ERRO NO BACKEND:", traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/movies/{id}", response_model=dict)
+async def get_movie_by_id(id: str = Path(..., title="Movie ID")):
+    from bson import ObjectId
+
+    try:
+        movie = await movies_collection.find_one({"_id": ObjectId(id)})
+        if not movie:
+            raise HTTPException(status_code=404, detail="Movie not found")
+        return movie_serializer(movie)
+    except Exception as e:
+        import traceback
+        print("🔥 ERRO NO BACKEND:", traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Failed to fetch movie by ID")

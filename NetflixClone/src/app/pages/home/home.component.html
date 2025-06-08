@@ -1,18 +1,46 @@
 <section class="movies">
   <div class="contain mt-3 mb-5 p-4">
-    <div class="row mt-4" *ngFor="let group of nonPersonalizedMovies">
-      <h3 class="text-white">{{ group.genre }} Movies</h3>
-      <div class="rowposter mt-3 p-2">
-        <ng-container *ngFor="let movie of group.top_movies">
-          <img
-            [src]="'assets/movies/' + movie.title + '.jpg'"
-            (error)="onImageError($event)"
-            class="rowimg largeposter"
-            alt="{{ movie.title }}"
-            [title]="movie.title"
-          />
-        </ng-container>
+  
+    <!-- Content-Based Recommendations (if user is logged in) -->
+    <ng-container *ngIf="this.user">
+      <div class="row mt-4" *ngFor="let group of contentBasedMovies">
+        <h3 class="text-white">{{ group.genre }} Movies</h3>
+        <div class="rowposter mt-3 p-2 d-flex flex-wrap gap-3">
+          <ng-container *ngFor="let movie of group.top_movies">
+            <div class="movie-card text-center">
+              <a [routerLink]="['/movie', movie.id]">
+                <img
+                  [src]="movie.image_url"
+                  class="rowimg largeposter"
+                  alt="{{ movie.title }}"
+                />
+              </a>
+              
+              <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+            </div>
+          </ng-container>
+        </div>
       </div>
-    </div>
+    </ng-container>
+
+    <!-- Non-Personalized Recommendations (if user is not logged in) -->
+    <ng-container *ngIf="!this.user">
+      <div class="row mt-4" *ngFor="let group of nonPersonalizedMovies">
+        <h3 class="text-white">{{ group.genre }} Movies</h3>
+        <div class="rowposter mt-3 p-2 d-flex flex-wrap gap-3">
+          <ng-container *ngFor="let movie of group.top_movies">
+            <div class="movie-card text-center">
+              <img
+                [src]="movie.image_url"
+                class="rowimg largeposter"
+                alt="{{ movie.title }}"
+              />
+              <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </ng-container>
+
   </div>
 </section>

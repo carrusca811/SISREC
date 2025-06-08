@@ -26,7 +26,7 @@ export class UserService {
         next: (response: any) => {
           localStorage.setItem('user', JSON.stringify(response));
           this.authState.next(true);
-          resolve();
+          this.router.navigate(['/home']);
         },
         error: (err) => {
           console.error('Login error:', err);

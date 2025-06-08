@@ -14,7 +14,8 @@ async def get_top_movies_per_genre(collection: AsyncIOMotorCollection, limit: in
                 "imdb_rating": "$imdb_rating",
                 "cast": "$cast",
                 "year": "$year",
-                "genres": "$genres"
+                "genres": "$genres",
+                "image_url": "$image_url"
             }}
         }},
         {"$project": {

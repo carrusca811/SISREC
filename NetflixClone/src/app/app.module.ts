@@ -12,11 +12,11 @@ import { MovieDetailsComponent } from './pages/movie-details/movie-details.compo
 import { RegisterComponent } from './components/register/register.component';
 import { LoginComponent } from './components/login/login.component';
 
+
 // PrimeNG Modules
-import { DropdownModule } from 'primeng/dropdown';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { AppRoutingModule } from './app-routing.module';
 import { NavbarComponent } from './shared/navbar/navbar.component';
+import { NgxStarsModule } from 'ngx-stars';
 
 @NgModule({
   declarations: [
@@ -30,13 +30,12 @@ import { NavbarComponent } from './shared/navbar/navbar.component';
   ],
   imports: [
     BrowserModule,
-    BrowserAnimationsModule,  // ✅ Required for PrimeNG animations
+    BrowserAnimationsModule, 
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
     AppRoutingModule,
-    DropdownModule,
-    MultiSelectModule,
+    NgxStarsModule
   ],
   providers: [
     provideHttpClient(),

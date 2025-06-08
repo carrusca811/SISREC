@@ -4,19 +4,35 @@ import { Observable } from 'rxjs';
 import { Movie } from '../components/model/movie.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MoviesService {
-
   private baseURL = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 
-
   getNonPersonalizedRecommendations(): Observable<any> {
-    return this.http.get<any>(`${this.baseURL}/movies/non_personalized_recommendations`);
+    return this.http.get<any>(
+      `${this.baseURL}/movies/non_personalized_recommendations`
+    );
   }
 
+  getColdStartRecommendations(
+    genres: string[],
+    actors: string[],
+    topN: number = 100
+  ) {
+    const params = {
+      genres: genres,
+      actors: actors,
+      top_n: topN.toString(),
+    };
+
+    return this.http.get<any[]>(
+      `${this.baseURL}/movies/cold_start_recommendations`,
+      { params }
+    );
+  }
 
   /** Fetch All Movies */
   getAllMovies(): Observable<Movie[]> {
@@ -43,14 +59,18 @@ export class MoviesService {
   searchMovies(title: string): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${this.baseURL}/movies?title=${title}`);
   }
-
-  /** Get Movie Cast - Simulating as part of the movie object */
+  /* 
   getMovieCast(id: string): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseURL}/movies/${id}/cast`);
   }
 
-  /** Get Movie Video - Simulating as part of the movie object */
   getMovieVideo(id: string): Observable<string> {
     return this.http.get<string>(`${this.baseURL}/movies/${id}/video`);
+  } */
+
+  getMoviesByName(name: string) {
+    return this.http.get<any[]>(
+      `http://localhost:8000/movies/search?name=${encodeURIComponent(name)}`
+    );
   }
 }

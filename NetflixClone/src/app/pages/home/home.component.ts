@@ -23,7 +23,9 @@ export class HomeComponent implements OnInit {
   sciencefictionMovieResults?: Movie[] = [];
   thrillerMovieResults?: Movie[] = []; */
   nonPersonalizedMovies: { genre: string; top_movies: Movie[] }[] = [];
-
+  contentBasedMovies: { genre: string; top_movies: Movie[] }[] = [];
+  genres: string[] = [];
+  actors: string[] = [];
   user: any;
 
   constructor(
@@ -35,34 +37,76 @@ export class HomeComponent implements OnInit {
     private storageService: AppStorageService
   ) {}
 
+
   ngOnInit(): void {
     this.verActiveUser();
+    
   }
 
   verActiveUser(): void {
     this.user = this.storageService.getItem('user');
 
     if (this.user && this.user.email.length > 0) {
-      console.log('personalized');
+        this.genres = this.user.preference_genre || [];
+        this.actors = this.user.preference_actor || [];
+        this.getContentBasedOnPreferences(this.genres, this.actors, 1000);
     } else {
       this.loadNonPersonalizedRecommendations();
     }
   }
+
+  
   loadNonPersonalizedRecommendations() {
     this.moviesService.getNonPersonalizedRecommendations().subscribe({
       next: (result) => {
         this.nonPersonalizedMovies = result;
+        console.log('Non-personalized recommendations:', this.nonPersonalizedMovies);
       },
       error: (err) => {
         console.error('Error loading recommendations:', err);
       }
     });
   }
-  
-  onImageError(event: Event) {
-    const target = event.target as HTMLImageElement;
-    target.src = 'assets/movies/default.jpg';
+
+  getContentBasedOnPreferences(genres: string[], actors: string[], limit: number): void {
+    this.moviesService.getColdStartRecommendations(genres, actors, limit).subscribe({
+      next: (result) => {
+        this.contentBasedMovies = this.groupContentBasedMoviesByGenre(result);
+        console.log('Grouped content-based movies:', this.contentBasedMovies);
+      },
+      error: (err) => {
+        console.error('Error fetching content based on preferences:', err);
+      }
+    });
   }
+  
+
+  groupContentBasedMoviesByGenre(movies: Movie[]): { genre: string; top_movies: Movie[] }[] {
+    const genreMap = new Map<string, Movie[]>();
+  
+    for (const movie of movies) {
+      if (movie.genres) {
+        for (const genre of movie.genres) {
+          const list = genreMap.get(genre) || [];
+          list.push(movie);
+          genreMap.set(genre, list);
+        }
+      }
+    }
+  
+    return Array.from(genreMap.entries()).map(([genre, movies]) => ({
+      genre,
+      top_movies: movies.slice(0, 10) // ou top_n vindo do backend
+    }));
+  }
+ 
+  getEncodedImagePath(title: string): string {
+    return 'assets/movies/' + encodeURIComponent(title) + '.jpg';
+  }
+  
+}
+
+
 
   /* ngOnInit (): void {
     this.trendingMovies();
@@ -133,4 +177,3 @@ export class HomeComponent implements OnInit {
   }
 }
  */
-}

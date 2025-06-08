@@ -1,28 +1,45 @@
 <div class="contain mt-5" *ngIf="movie">
   <div class="row p-5">
     <div class="col-lg-2">
-      <img *ngIf="movie.gross" src="https://image.tmdb.org/t/p/original/{{ movie.gross }}">
-      <img *ngIf="!movie.gross" src="./assets/images/no-image.jpg">
+      <img *ngIf="movie.image_url" [src]="movie.image_url" class="img-fluid" />
+      <img
+        *ngIf="!movie.image_url"
+        src="./assets/images/no-image.jpg"
+        class="img-fluid"
+      />
     </div>
-    
+
     <div class="col-lg-10 mt-5 p-4">
-      <h1 class="mt-2 mb-2">{{ movie.title }}</h1>
-      <p class="mt-3 mb-3 overview">{{ movie.meta_score }}</p>
-      <p class="mt-3 mb-3 overview">{{ movie.imdb_rating }}</p>
-      <p class="mt-3 mb-3 overview">{{ movie.runtime }} mins</p>
-      <p class="mt-3 mb-3 overview">{{ movie.genres.join(', ') }}</p>
 
-      <a class="btn btn-md btn-danger" [href]="videoUrl" target="_blank">Watch trailer</a>
-
-      <div class="mt-4 p-4">
-        <h2 class="text-white">Top Cast</h2>
+      <h2 class="text-white mb-4">Movie Information:</h2>
+    
+      <h1 class="mt-2 mb-2 text-white">{{ movie.title }}</h1>
+    
+      <p class="mt-3 mb-3 overview">
+        <strong>Metascore:</strong> {{ movie.meta_score }}
+      </p>
+    
+      <p class="mt-3 mb-3 overview">
+        <strong>IMDb Rating:</strong> {{ movie.imdb_rating }} / 10
+      </p>
+    
+      <p class="mt-3 mb-3 overview">
+        <strong>Runtime:</strong> {{ movie.runtime }} mins
+      </p>
+    
+      <p class="mt-3 mb-3 overview">
+        <strong>Genres:</strong> {{ movie.genres.join(", ") }}
+      </p>
+    
+      <a class="btn btn-md btn-danger mt-3" [href]="videoUrl" target="_blank">
+        Watch trailer
+      </a>
+    
+      <div class="mt-5 p-4 bg-dark rounded">
+        <h2 class="text-white">Top Cast:</h2>
         <div class="row">
-          <div class="col-lg-4" *ngFor="let c of cast">
+          <div class="col-lg-4" *ngFor="let c of movie.cast">
             <div class="row mt-2 mb-2">
-              <div class="col-lg-2">
-                <img *ngIf="c" src="https://image.tmdb.org/t/p/original/{{ c }}">
-                <img *ngIf="!c" src="./assets/images/no-image.jpg">
-              </div>
               <div class="col-lg-10">
                 <h3 class="text-white">{{ c }}</h3>
               </div>
@@ -30,7 +47,26 @@
           </div>
         </div>
       </div>
+    
+    
+    
 
+      <!-- ⭐ Sistema de Review ⭐ -->
+      <div class="mt-5 p-4 bg-dark rounded">
+        <h2 class="text-white">Rate this Movie</h2>
+      
+        <ngx-stars
+          (ratingOutput)="onRatingSet($event)"
+          [size]="24"
+          [color]="'gold'"
+        >
+        </ngx-stars>
+      
+        <button class="btn btn-danger mt-3" (click)="submitReview()">
+          Submit Review
+        </button>
+      </div>
+      
     </div>
   </div>
 </div>

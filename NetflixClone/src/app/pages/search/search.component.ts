@@ -19,15 +19,28 @@ export class SearchComponent implements OnInit {
 
   searchResult: any;
   searchForm = new FormGroup({
-    'movieName': new FormControl(null)
+    'movieName': new FormControl('')
   });
 
-/*   onSubmit () {
-    console.log(this.searchForm.value, 'searchform#');
-    this.moviesService.getSearchMovie(this.searchForm.value).subscribe((result) => {
-      console.log(result, 'searchmovie##');
-      this.searchResult = result.results;
-      this.searchForm.reset();
+  onSubmit() {
+    const movieName = (this.searchForm.value.movieName)?.trim();
+    if (!movieName) {
+      return; // ignora pesquisa vazia
+    }
+  
+    this.moviesService.getMoviesByName(movieName).subscribe({
+      next: (result) => {
+        console.log(result, 'searchResults##');
+        this.searchResult = result;
+      },
+      error: (err) => {
+        console.error('Error fetching movies:', err);
+      },
+      complete: () => {
+        this.searchForm.reset();
+      }
     });
-  } */
+  }
+  
+  
 }

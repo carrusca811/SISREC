@@ -26,20 +26,14 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  onSubmit(): void {
-    if (this.formLogin.valid) {
-      this.userService.login(this.formLogin.value)
-        .then(() => {
-          this.router.navigate(['/home']);
-        })
-        .catch(error => {
-          this.loginError = 'Email ou password inválidos.';
-          console.error(error);
-        });
-    } else {
-      this.loginError = 'Preencha todos os campos corretamente.';
-    }
+onSubmit(): void {
+  if (this.formLogin.valid) {
+    this.userService.login(this.formLogin.value);
+    
+  } else {
+    this.loginError = 'Preencha todos os campos corretamente.';
   }
+}
 
   // Este método pode ser usado no HTML para validações dinâmicas, se quiseres
   checkControl(controlName: string, errorName: string): boolean {

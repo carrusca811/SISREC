@@ -11,6 +11,7 @@ import { UserService } from 'src/app/services/user.service';
 export class NavbarComponent implements OnInit {
   navBackground: any;
   loggedIn = false;
+  currentRoute: string = '';
   @HostListener('document:scroll') scrollover () {
     console.log(document.body.scrollTop, 'scrolllength#');
 
@@ -29,6 +30,9 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     this.userService.isLoggedIn$.subscribe((status) => {
       this.loggedIn = status;
+    });
+    this.router.events.subscribe(() => {
+      this.currentRoute = this.router.url;
     });
   }
 

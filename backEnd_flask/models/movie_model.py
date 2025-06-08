@@ -14,3 +14,4 @@ class Movie(BaseModel):
     cast: Optional[List[str]]
     votes: Optional[str]
     gross: Optional[str]
+    image_url: Optional[str]
