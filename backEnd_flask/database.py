@@ -19,3 +19,4 @@ db = client[MONGO_DB]
 # Coleções
 movies_collection = db["movies"]
 users_collection = db["users"]
+reviews_collection = db["reviews"]

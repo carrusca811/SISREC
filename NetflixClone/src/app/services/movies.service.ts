@@ -73,4 +73,12 @@ export class MoviesService {
       `http://localhost:8000/movies/search?name=${encodeURIComponent(name)}`
     );
   }
+
+
+  makeReview(payload: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseURL}/movies/review`,
+      payload
+    );
+  }
 }

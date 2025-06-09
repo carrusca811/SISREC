@@ -13,17 +13,12 @@ import { UserService } from 'src/app/services/user.service';
   standalone: false,
 })
 export class HomeComponent implements OnInit {
-/*   trendingMoviesResults?: Movie[] = [];
-  discoverMoviesResults?: Movie[] = [];
-  actionMovieResults?: Movie[] = [];
-  adventureMovieResults?: Movie[] = [];
-  animationMovieResults?: Movie[] = [];
-  comedyMovieResults?: Movie[] = [];
-  documentaryMovieResults?: Movie[] = [];
-  sciencefictionMovieResults?: Movie[] = [];
-  thrillerMovieResults?: Movie[] = []; */
   nonPersonalizedMovies: { genre: string; top_movies: Movie[] }[] = [];
-  contentBasedMovies: { genre: string; top_movies: Movie[] }[] = [];
+  coldStartMovies: { genre: string; top_movies: Movie[] }[] = [];
+
+  groupedColdStart: { genre: string; slides: Movie[][] }[] = [];
+  groupedNonPersonalized: { genre: string; slides: Movie[][] }[] = [];
+
   genres: string[] = [];
   actors: string[] = [];
   user: any;
@@ -37,53 +32,56 @@ export class HomeComponent implements OnInit {
     private storageService: AppStorageService
   ) {}
 
-
   ngOnInit(): void {
     this.verActiveUser();
-    
   }
 
   verActiveUser(): void {
     this.user = this.storageService.getItem('user');
 
-    if (this.user && this.user.email.length > 0) {
+    if (this.user && this.user.email?.length > 0) {
+      const numReviews = this.user?.number_of_reviews || 0;
+
+      if (numReviews < 3) {
         this.genres = this.user.preference_genre || [];
         this.actors = this.user.preference_actor || [];
-        this.getContentBasedOnPreferences(this.genres, this.actors, 1000);
-    } else {
-      this.loadNonPersonalizedRecommendations();
+        this.getColdStartPreferences(this.genres, this.actors, 1000);
+      } else {
+        this.loadNonPersonalizedRecommendations();
+      }
     }
   }
 
-  
   loadNonPersonalizedRecommendations() {
     this.moviesService.getNonPersonalizedRecommendations().subscribe({
       next: (result) => {
         this.nonPersonalizedMovies = result;
-        console.log('Non-personalized recommendations:', this.nonPersonalizedMovies);
+        this.groupedNonPersonalized = result.map((group: { genre: any; top_movies: Movie[]; }) => ({
+          genre: group.genre,
+          slides: this.chunk(group.top_movies, 6)
+        }));
       },
       error: (err) => {
         console.error('Error loading recommendations:', err);
-      }
+      },
     });
   }
 
-  getContentBasedOnPreferences(genres: string[], actors: string[], limit: number): void {
+  getColdStartPreferences(genres: string[], actors: string[], limit: number): void {
     this.moviesService.getColdStartRecommendations(genres, actors, limit).subscribe({
       next: (result) => {
-        this.contentBasedMovies = this.groupContentBasedMoviesByGenre(result);
-        console.log('Grouped content-based movies:', this.contentBasedMovies);
+        console.log('Cold Start Recommendations:', result);
+        this.groupedColdStart = this.groupMoviesByGenre(result);
       },
       error: (err) => {
         console.error('Error fetching content based on preferences:', err);
-      }
+      },
     });
   }
-  
 
-  groupContentBasedMoviesByGenre(movies: Movie[]): { genre: string; top_movies: Movie[] }[] {
+  groupMoviesByGenre(movies: Movie[]): { genre: string; slides: Movie[][] }[] {
     const genreMap = new Map<string, Movie[]>();
-  
+
     for (const movie of movies) {
       if (movie.genres) {
         for (const genre of movie.genres) {
@@ -93,87 +91,24 @@ export class HomeComponent implements OnInit {
         }
       }
     }
-  
+
     return Array.from(genreMap.entries()).map(([genre, movies]) => ({
       genre,
-      top_movies: movies.slice(0, 10) // ou top_n vindo do backend
+      slides: this.chunk(movies, 6)
     }));
+
+    console.log('Grouped Movies by Genre:', this.groupedColdStart);
   }
- 
+
+  chunk(array: Movie[], size: number): Movie[][] {
+    const result: Movie[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      result.push(array.slice(i, i + size));
+    }
+    return result;
+  }
+
   getEncodedImagePath(title: string): string {
     return 'assets/movies/' + encodeURIComponent(title) + '.jpg';
   }
-  
 }
-
-
-
-  /* ngOnInit (): void {
-    this.trendingMovies();
-    this.discoverMovies();
-    this.actionMovies();
-    this.adventureMovies();
-    this.comedyMovies();
-    this.animationMovies();
-    this.documentaryMovies();
-    this.sciencefictionMovies();
-    this.thrillerMovies();
-  }
-
-  trendingMovies () {
-    this.moviesService.getTrendingMovies().subscribe((result) => {
-      console.log(result, 'trendingresult#');
-      this.trendingMoviesResults = result.results;
-    });
-  }
-
-  discoverMovies () {
-    this.moviesService.getDiscoverMovies().subscribe((result) => {
-      console.log(result, 'discoverresult#');
-      this.discoverMoviesResults = result.results;
-    });
-  }
-
-  actionMovies () {
-    this.moviesService.getActionMovies().subscribe((result) => {
-      this.actionMovieResults = result.results;
-    });
-  }
-
-  adventureMovies () {
-    this.moviesService.getAdventureMovies().subscribe((result) => {
-      this.adventureMovieResults = result.results;
-    });
-  }
-
-  animationMovies () {
-    this.moviesService.getAnimationMovies().subscribe((result) => {
-      this.animationMovieResults = result.results;
-    });
-  }
-
-  comedyMovies () {
-    this.moviesService.getComedyMovies().subscribe((result) => {
-      this.comedyMovieResults = result.results;
-    });
-  }
-
-  documentaryMovies () {
-    this.moviesService.getDocumentaries().subscribe((result) => {
-      this.documentaryMovieResults = result.results;
-    });
-  }
-
-  sciencefictionMovies () {
-    this.moviesService.getScienceFictionMovies().subscribe((result) => {
-      this.sciencefictionMovieResults = result.results;
-    });
-  }
-
-  thrillerMovies () {
-    this.moviesService.getThrillerMovies().subscribe((result) => {
-      this.thrillerMovieResults = result.results;
-    });
-  }
-}
- */

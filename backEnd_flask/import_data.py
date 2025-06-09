@@ -3,7 +3,7 @@ import pandas as pd
 from database import movies_collection
 import asyncio
 import aiohttp
-
+FALLBACK_IMAGE_URL = "N/A"
 DATA_PATH = "./data/dataset_limpo.xlsx"
 OMDB_API_KEY = "7048d9e5" 
 
@@ -34,7 +34,9 @@ async def import_data():
             for record in records:
                 title = record["title"]
                 year = record["year"]
-                record["image_url"] = await fetch_poster(session, title, year)
+                poster = await fetch_poster(session, title, year)
+                record["image_url"] = poster if poster and poster != "N/A" else FALLBACK_IMAGE_URL
+
 
         await movies_collection.insert_many(records)
         print(f"{len(records)} filmes inseridos com sucesso com posters!")

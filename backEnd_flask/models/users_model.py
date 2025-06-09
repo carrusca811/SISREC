@@ -6,6 +6,7 @@ class UserRegister(BaseModel):
     password: str
     preference_genre: List[str] = []
     preference_actor: List[str] = []
+    numReviews: int = 0
 
 class UserLogin(BaseModel):
     email: EmailStr

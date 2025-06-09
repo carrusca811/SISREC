@@ -3,9 +3,10 @@ from fastapi import FastAPI, HTTPException, Query
 from typing import List, Optional
 from pydantic import EmailStr, BaseModel
 from models import movie_serializer
+from models.review_model import ReviewModel
 from models.users_model import UserRegister, UserLogin
 from models.movie_model import Movie
-from database import users_collection, movies_collection
+from database import users_collection, movies_collection, reviews_collection
 from bson import ObjectId
 from fastapi.middleware.cors import CORSMiddleware
 from models.movie_serializer import movie_serializer
@@ -41,6 +42,7 @@ class UserRegister(BaseModel):
     preference_genre: Optional[List[str]] = []
     preference_actor: Optional[List[str]] = []
 
+
 @app.post("/register")
 async def register(user: UserRegister):
     print(f"Received payload: {user.dict()}")
@@ -60,7 +62,8 @@ async def register(user: UserRegister):
         "password": hashed_password.decode("utf-8"),
         "preference_genre": user.preference_genre,
         "preference_actor": user.preference_actor,
-        "isSelectingPreferences": True  # Inicialmente True até selecionar preferências
+        "numReviews": 0 
+        
     }
 
     # Inserir o novo utilizador na base de dados
@@ -93,6 +96,7 @@ async def login(user: UserLogin):
         "email": existing_user["email"],
         "preference_genre": existing_user.get("preference_genre", []),
         "preference_actor": existing_user.get("preference_actor", []),
+        "numReviews": existing_user.get("numReviews", 0),
     }
 
 @app.get("/movies", response_model=List[Movie])
@@ -187,3 +191,27 @@ async def get_movie_by_id(id: str = Path(..., title="Movie ID")):
         import traceback
         print("🔥 ERRO NO BACKEND:", traceback.format_exc())
         raise HTTPException(status_code=500, detail="Failed to fetch movie by ID")
+    
+@app.post("/movies/review")
+async def submit_review(review: ReviewModel):
+    try:
+        review_doc = {
+            "user_id": ObjectId(review.user_id),
+            "movie_id": ObjectId(review.movie_id),
+            "rating": review.rating,
+        }
+
+        # Guarda a nova review
+        await reviews_collection.insert_one(review_doc)
+
+        # Incrementa o contador de reviews do utilizador
+        await users_collection.update_one(
+            {"_id": ObjectId(review.user_id)},
+            {"$inc": {"numReviews": 1}}
+        )
+
+        return {"message": "Review saved successfully"}
+
+    except Exception as e:
+        print("🔥 ERRO AO GUARDAR REVIEW:", str(e))
+        raise HTTPException(status_code=500, detail="Error saving review")

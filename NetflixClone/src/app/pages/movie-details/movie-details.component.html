@@ -1,12 +1,11 @@
 <div class="contain mt-5" *ngIf="movie">
   <div class="row p-5">
     <div class="col-lg-2">
-      <img *ngIf="movie.image_url" [src]="movie.image_url" class="img-fluid" />
       <img
-        *ngIf="!movie.image_url"
-        src="./assets/images/no-image.jpg"
-        class="img-fluid"
-      />
+                      [src]="movie.image_url && movie.image_url !== 'N/A' ? movie.image_url : 'assets/images/no-image.png'"
+                      class="rowimg largeposter d-block"
+                      alt="{{ movie.title }}"
+                    />
     </div>
 
     <div class="col-lg-10 mt-5 p-4">

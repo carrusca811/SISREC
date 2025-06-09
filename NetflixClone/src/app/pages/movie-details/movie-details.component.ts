@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MoviesService } from '../../services/movies.service';
 import { Movie } from 'src/app/components/model/movie.model';
 import { User } from 'src/app/components/model/user.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppStorageService } from 'src/app/services/app.storage.service';
 
 @Component({
@@ -21,7 +21,8 @@ export class MovieDetailsComponent implements OnInit {
   constructor(
     private moviesService: MoviesService,
     private route: ActivatedRoute,
-        private storageService: AppStorageService // Assuming you have a StorageService for user data
+        private storageService: AppStorageService,
+        private router : Router
   ) {}
 
   ngOnInit(): void {
@@ -60,15 +61,19 @@ export class MovieDetailsComponent implements OnInit {
 
     console.log('Submitting review:', payload);
 
-/*     this.moviesService.submitReview(payload).subscribe({
+     this.moviesService.makeReview(payload).subscribe({
       next: () => {
         alert('Avaliação submetida com sucesso!');
         this.rating = 0;
+        setTimeout(() => {
+        this.router.navigate(['/home']); // Redirect to movies list or details page
+        }
+        , 1000);
       },
       error: (err) => {
         console.error(err);
         alert('Erro ao submeter a avaliação.');
       },
-    }); */
+    }); 
   }
 }

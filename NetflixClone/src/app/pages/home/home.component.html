@@ -1,46 +1,66 @@
+
 <section class="movies">
   <div class="contain mt-3 mb-5 p-4">
-  
-    <!-- Content-Based Recommendations (if user is logged in) -->
-    <ng-container *ngIf="this.user">
-      <div class="row mt-4" *ngFor="let group of contentBasedMovies">
+    <!-- Cold Start Carousels -->
+    <ng-container *ngIf="user">
+      <div class="row mt-4" *ngFor="let group of groupedColdStart">
         <h3 class="text-white">{{ group.genre }} Movies</h3>
-        <div class="rowposter mt-3 p-2 d-flex flex-wrap gap-3">
-          <ng-container *ngFor="let movie of group.top_movies">
-            <div class="movie-card text-center">
-              <a [routerLink]="['/movie', movie.id]">
-                <img
-                  [src]="movie.image_url"
-                  class="rowimg largeposter"
-                  alt="{{ movie.title }}"
-                />
-              </a>
-              
-              <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+        <div id="{{ 'carousel-cold-' + group.genre }}" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item" *ngFor="let slide of group.slides; let i = index" [ngClass]="{ active: i === 0 }">
+              <div class="d-flex justify-content-center gap-3">
+                <div class="movie-card text-center" *ngFor="let movie of slide">
+                  <a [routerLink]="['/movie', movie.id]">
+                    <img
+                      [src]="movie.image_url && movie.image_url !== 'N/A' ? movie.image_url : 'assets/images/no-image.png'"
+                      class="rowimg largeposter d-block"
+                      alt="{{ movie.title }}"
+                    />
+                  </a>
+                  <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+                </div>
+              </div>
             </div>
-          </ng-container>
+          </div>
+          <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#carousel-cold-' + group.genre" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#carousel-cold-' + group.genre" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
         </div>
       </div>
     </ng-container>
 
-    <!-- Non-Personalized Recommendations (if user is not logged in) -->
-    <ng-container *ngIf="!this.user">
-      <div class="row mt-4" *ngFor="let group of nonPersonalizedMovies">
+    <!-- Non-Personalized Carousels -->
+    <ng-container *ngIf="!user">
+      <div class="row mt-4" *ngFor="let group of groupedNonPersonalized">
         <h3 class="text-white">{{ group.genre }} Movies</h3>
-        <div class="rowposter mt-3 p-2 d-flex flex-wrap gap-3">
-          <ng-container *ngFor="let movie of group.top_movies">
-            <div class="movie-card text-center">
-              <img
-                [src]="movie.image_url"
-                class="rowimg largeposter"
-                alt="{{ movie.title }}"
-              />
-              <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+        <div id="{{ 'carousel-np-' + group.genre }}" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item" *ngFor="let slide of group.slides; let i = index" [ngClass]="{ active: i === 0 }">
+              <div class="d-flex justify-content-center gap-3">
+                <div class="movie-card text-center" *ngFor="let movie of slide">
+                  <a [routerLink]="['/movie', movie.id]">
+                    <img
+                      [src]="movie.image_url && movie.image_url !== 'N/A' ? movie.image_url : 'assets/images/no-image.png'"
+                      class="rowimg largeposter d-block"
+                      alt="{{ movie.title }}"
+                    />
+                  </a>
+                  <p class="movie-title text-white mt-2">{{ movie.title }}</p>
+                </div>
+              </div>
             </div>
-          </ng-container>
+          </div>
+          <button class="carousel-control-prev" type="button" [attr.data-bs-target]="'#carousel-np-' + group.genre" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" [attr.data-bs-target]="'#carousel-np-' + group.genre" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
         </div>
       </div>
     </ng-container>
-
   </div>
 </section>
