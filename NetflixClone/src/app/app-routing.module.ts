@@ -6,6 +6,7 @@ import { HomeComponent } from "./pages/home/home.component";
 import { RegisterComponent } from "./components/register/register.component";
 import { LoginComponent } from "./components/login/login.component";
 import { RouterModule, Routes } from "@angular/router";
+import { UserProfileComponent } from "./components/user-profile/user-profile.component";
 
 const routes: Routes = [
   { path: 'register', component: RegisterComponent },
@@ -23,6 +24,11 @@ const routes: Routes = [
   {
     path: 'movie/:id',
     component: MovieDetailsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'profile',
+    component: UserProfileComponent,
     canActivate: [AuthGuard]
   },
   { path: '', pathMatch: 'full', redirectTo: '/home' },

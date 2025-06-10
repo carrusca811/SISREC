@@ -13,4 +13,5 @@ def movie_serializer(movie):
         "votes": movie.get("votes"),
         "gross": movie.get("gross"),
         "image_url": movie.get("image_url"),
+         "users_review": movie.get("users_review", 0.0)
     }

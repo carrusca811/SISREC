@@ -1,6 +1,5 @@
 fastapi[all]
 uvicorn
-pymongo
 python-dotenv
 scikit-learn
 pandas
@@ -9,3 +8,4 @@ pydantic[email]
 bcrypt
 duckduckgo-search
 aiohttp
+implicit

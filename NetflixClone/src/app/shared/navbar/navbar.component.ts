@@ -1,5 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { AppStorageService } from 'src/app/services/app.storage.service';
 import { UserService } from 'src/app/services/user.service';
 
 @Component({
@@ -25,7 +26,7 @@ export class NavbarComponent implements OnInit {
   }
 
 
-  constructor (private userService: UserService, private router: Router) { }
+  constructor (private userService: UserService, private router: Router, private storageService: AppStorageService) { }
 
   ngOnInit(): void {
     this.userService.isLoggedIn$.subscribe((status) => {
@@ -39,6 +40,7 @@ export class NavbarComponent implements OnInit {
   onClick () {
     this.userService.logout()
       .then(() => {
+        this.storageService.removeItem('user');
         this.router.navigate([ '/login' ]);
       })
       .catch(error => console.log(error));

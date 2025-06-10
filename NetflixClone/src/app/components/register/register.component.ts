@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AppStorageService } from 'src/app/services/app.storage.service';
 
 import { UserService } from 'src/app/services/user.service';
 
@@ -76,7 +77,7 @@ filteredActors: Option[] = [];
   genreOptions: Option[] = [];
   actorOptions: Option[] = [];
 
-  constructor(private service: UserService, private router: Router) {
+  constructor(private service: UserService, private router: Router, private storageService :AppStorageService) {
     this.formRegister = new FormGroup({
       email: new FormControl('', [Validators.required, Validators.email]),
       password: new FormControl('', [Validators.required, Validators.minLength(6)]),
@@ -135,35 +136,40 @@ filteredActors: Option[] = [];
 
   savePreferences(): void {
     const userId = sessionStorage.getItem('user_id');
-
+  
     if (!userId) {
       this.registerError = 'User ID not found.';
       return;
     }
-
+  
     if (this.selectedGenres.length !== 2 || this.selectedActors.length !== 2) {
       this.registerError = 'Select exactly 2 genres and 2 actors.';
       return;
     }
-
+  
     const preferences = {
       user_id: userId,
       preference_genre: this.selectedGenres,
       preference_actor: this.selectedActors,
     };
-
+  
     this.service.updatePreferences(preferences)
       .then(() => {
-        sessionStorage.removeItem('user_id');
-        this.isSelectingPreferences = false;
-        this.router.navigate(['/login']);
+        this.service.getUserById(userId).subscribe({
+          next: (user) => {
+            this.storageService.setItem('user', user);  
+            this.isSelectingPreferences = false;
+            setTimeout(() => {
+            this.router.navigate(['/']);  
+          }, 1000); 
+          }
+        });
       })
       .catch(err => {
         this.registerError = err.message || 'Error updating preferences.';
       });
   }
-
-
+  
 
   
 toggleDropdown(type: 'genre' | 'actor'): void {

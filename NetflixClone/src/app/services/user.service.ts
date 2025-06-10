@@ -51,10 +51,16 @@ export class UserService {
     });
   }
 
-  getCurrentUser(): any | null {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+  getUserById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseURL}/users/${id}`);
   }
+
+  getUserReviewedMovies(id: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseURL}/users/${id}/reviewed-movies`);
+  }
+  
+  
+  
 
 
   updatePreferences(preferences: { user_id: string, preference_genre: string[], preference_actor: string[] }): Promise<any> {

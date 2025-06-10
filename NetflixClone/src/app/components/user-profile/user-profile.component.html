@@ -1,0 +1,54 @@
+<section class="profile-section mt-5 text-white">
+    <!-- 👤 User Info -->
+    <div class="container mt-5 mb-5">
+      <h2 class="mb-3">User Profile</h2>
+      <p><strong>Email:</strong> {{ user?.email }}</p>
+      <p><strong>Favorite Genres:</strong> {{ user?.preference_genre?.join(', ') || 'None' }}</p>
+      <p><strong>Favorite Actors:</strong> {{ user?.preference_actor?.join(', ') || 'None' }}</p>
+      <hr class="text-secondary" />
+    </div>
+  
+    <!-- 🎬 Rated Movies -->
+    <div class="container" *ngIf="reviewedMovies">
+      <h3 class="mb-4">Already Rated Movies</h3>
+  
+      <div id="carousel-reviewed" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <div
+            class="carousel-item"
+            *ngFor="let slide of chunk(reviewedMovies, 5); let i = index"
+            [ngClass]="{ active: i === 0 }"
+          >
+            <div class="d-flex justify-content-center gap-4 flex-wrap">
+              <div class="movie-card text-center" *ngFor="let movie of slide">
+                <a [routerLink]="['/movie', movie.id]">
+                  <img
+                    [src]="movie.image_url && movie.image_url !== 'N/A' ? movie.image_url : 'assets/images/no-image.png'"
+                    class="movie-poster"
+                    alt="{{ movie.title }}"
+                  />
+                </a>
+                <div class="mt-2">
+                  <p class="movie-title text-white mb-1">{{ movie.title }}</p>
+                  <p class="text-warning mb-0">★ {{ movie.user_rating || '—' }} / 10</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-reviewed" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carousel-reviewed" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  
+    <!-- 🔕 No Reviews -->
+    <div class="container text-secondary mt-5" *ngIf="reviewedMovies?.length === 0">
+      <p>This user hasn't rated any movies yet.</p>
+    </div>
+  </section>
+  

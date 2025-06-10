@@ -49,24 +49,12 @@ export class MoviesService {
     return this.http.get<Movie>(`${this.baseURL}/movies/${id}`);
   }
 
-  /** Fetch Trending Movies (Dummy) */
-  getTrendingMovies(): Observable<Movie[]> {
-    // Assuming that trending movies are just a filter by rating
-    return this.http.get<Movie[]>(`${this.baseURL}/movies?min_rating=8`);
-  }
 
   /** Search Movies by Title */
   searchMovies(title: string): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${this.baseURL}/movies?title=${title}`);
   }
-  /* 
-  getMovieCast(id: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseURL}/movies/${id}/cast`);
-  }
 
-  getMovieVideo(id: string): Observable<string> {
-    return this.http.get<string>(`${this.baseURL}/movies/${id}/video`);
-  } */
 
   getMoviesByName(name: string) {
     return this.http.get<any[]>(
@@ -81,4 +69,28 @@ export class MoviesService {
       payload
     );
   }
+
+  getContentBasedRecommendations(userId: string) {
+    return this.http.get<{ genre: string; top_movies: Movie[] }[]>(
+      `${this.baseURL}/movies/content_based_recommendations?user_id=${userId}`
+    );
+  }
+
+  getCollaborativeRecommendations(userId: string) {
+    return this.http.get<Movie[]>(
+      `${this.baseURL}/movies/collaborative_recommendations`,
+      { params: { user_id: userId } }
+    );
+  }
+  
+
+  getHybridRecommendations(userId: string) {
+    return this.http.get<{ genre: string; top_movies: Movie[] }[]>(
+      `${this.baseURL}/movies/hybrid_recommendations`,
+      { params: { user_id: userId } }
+    );
+  }
+  
+  
+  
 }

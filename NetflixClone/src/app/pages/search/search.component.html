@@ -12,7 +12,7 @@
 
   <div class="row mt-5 results" *ngIf="searchResult?.length > 0">
     <div class="col-lg-4" *ngFor="let s of searchResult">
-      <div class="card mb-3">
+      <div class="card mb-3" [routerLink]="['/movie', s.id]">
         <img [src]="s.image_url" class="card-img-top">
         <div class="card-body">
           <h5 class="card-title" style="color: black;">{{ s.title }}</h5>

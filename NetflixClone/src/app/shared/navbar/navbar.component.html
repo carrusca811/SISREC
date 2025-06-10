@@ -2,37 +2,58 @@
   <div class="container-fluid">
     <a class="navbar-brand" routerLink="home">NETFLIX</a>
 
-    <button *ngIf="loggedIn" class="navbar-toggler" type="button" data-bs-toggle="collapse"
-      data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-      aria-label="Toggle navigation">
+    <button
+      *ngIf="loggedIn"
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-
+      <ul class="navbar-nav d-flex align-items-center ms-auto">
         <ng-container *ngIf="loggedIn; else guestButtons">
-          <li class="nav-item">
-            <a class="nav-link active me-2" aria-current="page" routerLink="home">Home</a>
+
+           <li class="nav-item me-2">
+            <a class="btn btn-outline fw-bold" routerLink="profile">Profile</a>
           </li>
-          <li class="nav-item ms-2 me-4">
-            <a class="nav-link btn btn-danger search" routerLink="search">Search</a>
+          
+          <li class="nav-item me-2">
+            <a class="btn btn-outline-light fw-bold" routerLink="home">Home</a>
+          </li>
+          <li class="nav-item me-2">
+            <a class="btn btn-danger fw-bold" routerLink="search">Search</a>
           </li>
           <li class="nav-item">
-            <button class="btn btn-primary fw-bold me-4" (click)="onClick()">Logout</button>
+            <button class="btn btn-primary fw-bold" (click)="onClick()">
+              Logout
+            </button>
           </li>
         </ng-container>
 
         <ng-template #guestButtons>
-          <li class="nav-item" *ngIf="currentRoute !== '/login'">
-            <a class="nav-link btn btn-outline-light me-3" routerLink="login">Login</a>
+          <li
+            class="nav-item"
+            *ngIf="currentRoute !== '/login' && currentRoute !== '/register'"
+          >
+            <a class="nav-link btn btn-outline-light me-3" routerLink="login"
+              >Login</a
+            >
           </li>
-          <li class="nav-item" *ngIf="currentRoute !== '/login' && currentRoute !== '/register'">
-            <a class="nav-link btn btn-danger" routerLink="register">Register</a>
+          <li
+            class="nav-item"
+            *ngIf="currentRoute !== '/login' && currentRoute !== '/register'"
+          >
+            <a class="nav-link btn btn-danger" routerLink="register"
+              >Register</a
+            >
           </li>
         </ng-template>
-        
-
       </ul>
     </div>
   </div>

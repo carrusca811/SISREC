@@ -13,4 +13,5 @@ export interface Movie {
   poster: string;
   gross?: number;
   image_url: string;
+  users_review: number;
 }
