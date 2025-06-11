@@ -20,20 +20,22 @@ export class MoviesService {
   getColdStartRecommendations(
     genres: string[],
     actors: string[],
+    userId: string,
     topN: number = 100
   ) {
     const params = {
+      user_id: userId,
       genres: genres,
       actors: actors,
       top_n: topN.toString(),
     };
-
+  
     return this.http.get<any[]>(
       `${this.baseURL}/movies/cold_start_recommendations`,
       { params }
     );
   }
-
+  
   /** Fetch All Movies */
   getAllMovies(): Observable<Movie[]> {
     return this.http.get<Movie[]>(`${this.baseURL}/movies`);

@@ -1,82 +1,202 @@
-
 import asyncio
-from utils.evaluation_pipelyne import split_train_test, evaluate_model
-from utils.colaborative_als import build_als_training_data, build_als_model, recommend_movies_als
+import numpy as np
+from math import isnan
+from bson import ObjectId
+from database import reviews_collection, users_collection, movies_collection
+from utils.colaborative_filtering_utils import build_user_movie_matrix, recommend_movies_for_user
 from utils.content_based_utils import get_content_based_recommendations
-from utils.cold_start_utils import cold_start_python_filter
+from utils.evaluation import evaluate_classification, evaluate_predictions
 
-from utils.colaborative_filtering_utils import recommend_movies_for_user, build_user_movie_matrix
+def print_evaluation_summary(results):
+    print("\n" + "="*80)
+    print("🎯 RESUMO DA AVALIAÇÃO DO SISTEMA DE RECOMENDAÇÃO")
+    print("="*80)
+    print(f"{'Método':<16}{'Precision':<10}{'Recall':<10}{'F1-Score':<10}{'Accuracy':<10}{'RankScore':<12}{'MAE':<10}{'RMSE':<10}{'RMAE':<10}")
+    print("-"*80)
+    for method, metrics in results.items():
+        print(f"{method:<16}{metrics['precision']:<10.4f}{metrics['recall']:<10.4f}{metrics['f1_score']:<10.4f}{metrics['accuracy']:<10.4f}{metrics['rank_score']:<12.4f}{metrics['mae']:<10.4f}{metrics['rmse']:<10.4f}{metrics['rmae']:<10.4f}")
+    print("="*80)
+
+    print("\n🏆 MELHORES RESULTADOS:")
+    print(f"   Precision: {max(results.items(), key=lambda x: x[1]['precision'])[0]} ({max(r['precision'] for r in results.values()):.4f})")
+    print(f"   Recall: {max(results.items(), key=lambda x: x[1]['recall'])[0]} ({max(r['recall'] for r in results.values()):.4f})")
+    print(f"   F1-Score: {max(results.items(), key=lambda x: x[1]['f1_score'])[0]} ({max(r['f1_score'] for r in results.values()):.4f})")
+    print("="*80)
+
 
 async def run_evaluation(top_n=10):
-    print("\n🔍 Iniciando avaliação dos sistemas de recomendação...")
+    print("🚀 Iniciando avaliação completa...")
 
-    # --- MATRIZ COMPLETA
-    df_als, full_matrix = await build_als_training_data()
-    train_matrix, test_data = split_train_test(full_matrix, test_ratio=0.2)
-    user_ids = list(test_data.keys())
+    users = await users_collection.find().to_list(None)
+    reviews = await reviews_collection.find().to_list(None)
 
-    # --- ALS
-    print("\n✅ Avaliando ALS...")
-    model, uid_map, mid_rev_map, als_matrix = build_als_model(df_als, train_matrix)
-    def als_fn(user_id, top_n):
-        return recommend_movies_als(model, als_matrix, uid_map, mid_rev_map, user_id, top_n)
-    als_results = evaluate_model(user_ids, als_fn, test_data, top_n=top_n)
+    print(f"📊 Dados carregados: {len(users)} utilizadores, {len(reviews)} reviews")
 
-    # --- Content-Based
-    print("\n✅ Avaliando Content-Based...")
-    async def cb_fn(user_id, top_n):
-        result = await get_content_based_recommendations(user_id)
-        flat = [m for g in result for m in g["top_movies"]]
-        return [(m["id"], 1.0) for m in flat[:top_n]]
-    cb_results = await evaluate_model_async(user_ids, cb_fn, test_data, top_n=top_n)
+    ratings_map = {}
+    for r in reviews:
+        uid = str(r["user_id"])
+        mid = str(r["movie_id"])
+        rating = float(r["rating"])
+        ratings_map.setdefault(uid, {})[mid] = rating
 
-    # --- Cold Start
-    print("\n✅ Avaliando Cold Start...")
-    async def cs_fn(user_id, top_n):
-        result = await cold_start_python_filter(user_id)
-        return [(m["id"], 1.0) for m in result[:top_n]]
-    cs_results = await evaluate_model_async(user_ids, cs_fn, test_data, top_n=top_n)
+    print(f"🎯 Utilizadores com reviews: {len(ratings_map)}")
 
-    # --- Collaborative Filtering (Tradicional)
-    print("\n✅ Avaliando CF Similaridade...")
-    matrix_cf = await build_user_movie_matrix()
-    def cf_fn(user_id, top_n):
-        return [(m, 1.0) for m in recommend_movies_for_user(matrix_cf, user_id, top_n)]
-    cf_results = evaluate_model(user_ids, cf_fn, test_data, top_n=top_n)
+    valid_users = [u for u in users if len(ratings_map.get(str(u["_id"]), {})) >= 5]
+    print(f"✅ Utilizadores válidos (≥5 reviews): {len(valid_users)}")
 
-    # --- Resultados
-    print("\n📊 Resultados Finais:")
-    for name, metrics in zip(["ALS", "Content-Based", "Cold Start", "CF Similaridade"],
-                              [als_results, cb_results, cs_results, cf_results]):
-        print(f"\n🔸 {name}:")
-        for k, v in metrics.items():
-            print(f"{k}: {v}")
+    if len(valid_users) == 0:
+        print("❌ Nenhum utilizador com reviews suficientes para avaliação")
+        return
 
-# Avaliação assíncrona
-async def evaluate_model_async(user_ids, async_fn, test_data, top_n):
-    results = []
-    for uid in user_ids:
-        if uid not in test_data:
-            continue
+    # CONTENT-BASED
+    print("\n🎬 Avaliando Content-Based...")
+    cb_results, cb_processed, cb_true, cb_pred = [], 0, [], []
+    for user in valid_users:
+        uid = str(user["_id"])
+        rated_movies = ratings_map.get(uid, {})
         try:
-            recs = await async_fn(uid, top_n)
-            recs = [r[0] for r in recs] if recs and isinstance(recs[0], tuple) else recs
-            hits = set(recs).intersection(test_data[uid])
-            precision = len(hits) / top_n
-            recall = len(hits) / len(test_data[uid])
-            results.append((precision, recall, 1 if hits else 0))
-        except:
-            continue
+            movie_ids = list(rated_movies.keys())
+            np.random.shuffle(movie_ids)
+            split_point = int(len(movie_ids) * 0.8)
+            train_ids, test_ids = set(movie_ids[:split_point]), set(movie_ids[split_point:])
+            if len(test_ids) == 0:
+                continue
 
-    precisions = [r[0] for r in results]
-    recalls = [r[1] for r in results]
-    hits = [r[2] for r in results]
+            test_reviews = []
+            for mid in test_ids:
+                test_reviews.append({"user_id": ObjectId(uid), "movie_id": ObjectId(mid)})
+                await reviews_collection.delete_one({"user_id": ObjectId(uid), "movie_id": ObjectId(mid)})
 
-    return {
-        f"Precision@{top_n}": round(sum(precisions) / len(precisions), 4) if precisions else 0.0,
-        f"Recall@{top_n}": round(sum(recalls) / len(recalls), 4) if recalls else 0.0,
-        "HitRate": round(sum(hits) / len(hits), 4) if hits else 0.0
+            cb_recs = await get_content_based_recommendations(uid)
+
+            for review_data in test_reviews:
+                await reviews_collection.insert_one({
+                    **review_data,
+                    "rating": rated_movies[str(review_data["movie_id"])]
+                })
+
+            if cb_recs:
+                recommended_ids = []
+                for group in cb_recs:
+                    for movie in group.get("top_movies", []):
+                        mid = str(movie.get("id", movie.get("_id", "")))
+                        if mid and mid not in train_ids:
+                            recommended_ids.append(mid)
+
+                relevant_ids = [mid for mid in test_ids if rated_movies[mid] >= 4.0]
+                cb_true.extend([rated_movies[mid] for mid in test_ids])
+                cb_pred.extend([rated_movies.get(mid, 0) for mid in test_ids])
+
+                if recommended_ids and relevant_ids:
+                    cb_results.append((uid, recommended_ids[:top_n], relevant_ids))
+                    cb_processed += 1
+        except Exception as e:
+            print(f"❌ Erro CB para user {uid}: {e}")
+    print(f"✅ Content-Based processado: {cb_processed} utilizadores")
+
+    # COLLABORATIVE
+    print("\n🤝 Avaliando Collaborative Filtering...")
+    cf_results, cf_processed, cf_true, cf_pred = [], 0, [], []
+    try:
+        matrix = await build_user_movie_matrix()
+        print(f"📊 Matriz construída: {matrix.shape}")
+        for user in valid_users:
+            uid = str(user["_id"])
+            if uid not in matrix.index:
+                continue
+            rated_movies = ratings_map.get(uid, {})
+            movie_ids = list(rated_movies.keys())
+            np.random.shuffle(movie_ids)
+            split_point = int(len(movie_ids) * 0.8)
+            train_ids, test_ids = set(movie_ids[:split_point]), set(movie_ids[split_point:])
+            if len(test_ids) == 0:
+                continue
+            train_matrix = matrix.copy()
+            for mid in test_ids:
+                if mid in train_matrix.columns:
+                    train_matrix.loc[uid, mid] = np.nan
+            recommended_ids = recommend_movies_for_user(train_matrix, uid, top_n=top_n*2)
+            filtered_recs = [mid for mid in recommended_ids if mid not in train_ids]
+            relevant_ids = [mid for mid in test_ids if rated_movies[mid] >= 4.0]
+            cf_true.extend([rated_movies[mid] for mid in test_ids])
+            cf_pred.extend([rated_movies.get(mid, 0) for mid in test_ids])
+            if filtered_recs and relevant_ids:
+                cf_results.append((uid, filtered_recs[:top_n], relevant_ids))
+                cf_processed += 1
+    except Exception as e:
+        print(f"❌ Erro CF: {e}")
+    print(f"✅ Collaborative Filtering processado: {cf_processed} utilizadores")
+
+    # HYBRID
+    print("\n⚡ Avaliando Hybrid...")
+    hybrid_results, hybrid_processed, hy_true, hy_pred = [], 0, [], []
+    for user in valid_users:
+        uid = str(user["_id"])
+        rated_movies = ratings_map.get(uid, {})
+        try:
+            movie_ids = list(rated_movies.keys())
+            np.random.shuffle(movie_ids)
+            split_point = int(len(movie_ids) * 0.8)
+            train_ids, test_ids = set(movie_ids[:split_point]), set(movie_ids[split_point:])
+            if len(test_ids) == 0:
+                continue
+            test_reviews = []
+            for mid in test_ids:
+                test_reviews.append({"user_id": ObjectId(uid), "movie_id": ObjectId(mid)})
+                await reviews_collection.delete_one({"user_id": ObjectId(uid), "movie_id": ObjectId(mid)})
+            cb_recs = await get_content_based_recommendations(uid)
+            cb_ids = set()
+            if cb_recs:
+                for group in cb_recs:
+                    for movie in group.get("top_movies", []):
+                        mid = str(movie.get("id", movie.get("_id", "")))
+                        if mid and mid not in train_ids:
+                            cb_ids.add(mid)
+            for review_data in test_reviews:
+                await reviews_collection.insert_one({
+                    **review_data,
+                    "rating": rated_movies[str(review_data["movie_id"])]
+                })
+            if uid in matrix.index:
+                train_matrix = matrix.copy()
+                for mid in test_ids:
+                    if mid in train_matrix.columns:
+                        train_matrix.loc[uid, mid] = np.nan
+                cf_ids = set(recommend_movies_for_user(train_matrix, uid, top_n=top_n*2))
+                cf_ids = {mid for mid in cf_ids if mid not in train_ids}
+            else:
+                cf_ids = set()
+            combined_ids = list((cb_ids | cf_ids))
+            relevant_ids = [mid for mid in test_ids if rated_movies[mid] >= 4.0]
+            hy_true.extend([rated_movies[mid] for mid in test_ids])
+            hy_pred.extend([rated_movies.get(mid, 0) for mid in test_ids])
+            if combined_ids and relevant_ids:
+                hybrid_results.append((uid, combined_ids[:top_n], relevant_ids))
+                hybrid_processed += 1
+        except Exception as e:
+            print(f"❌ Erro Hybrid para user {uid}: {e}")
+    print(f"✅ Hybrid processado: {hybrid_processed} utilizadores")
+
+    print("\n📊 Calculando métricas...")
+    
+    results = {
+        "Content-Based": evaluate_classification(cb_results, top_k=top_n),
+        "Collaborative": evaluate_classification(cf_results, top_k=top_n),
+        "Hybrid": evaluate_classification(hybrid_results, top_k=top_n)
     }
 
-if __name__ == "__main__":
-    asyncio.run(run_evaluation())
+
+    print_evaluation_summary(results)
+
+    print("\n📋 Avaliação individual por utilizador:")
+    for uid, recommendations, relevant in cb_results:
+        inter = set(recommendations) & set(relevant)
+        print(f"[CB] user={uid} → Recs: {len(recommendations)}, Relevant: {len(relevant)}, Matches: {len(inter)}")
+    for uid, recommendations, relevant in cf_results:
+        inter = set(recommendations) & set(relevant)
+        print(f"[CF] user={uid} → Recs: {len(recommendations)}, Relevant: {len(relevant)}, Matches: {len(inter)}")
+    for uid, recommendations, relevant in hybrid_results:
+        inter = set(recommendations) & set(relevant)
+        print(f"[HY] user={uid} → Recs: {len(recommendations)}, Relevant: {len(relevant)}, Matches: {len(inter)}")
+
+    return results

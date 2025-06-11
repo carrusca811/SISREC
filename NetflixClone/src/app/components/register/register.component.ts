@@ -161,7 +161,7 @@ filteredActors: Option[] = [];
             this.isSelectingPreferences = false;
             setTimeout(() => {
             this.router.navigate(['/']);  
-          }, 1000); 
+          }, 2000); 
           }
         });
       })

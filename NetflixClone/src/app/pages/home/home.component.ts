@@ -77,9 +77,9 @@ export class HomeComponent implements OnInit {
           this.genres = user.preference_genre || [];
           this.actors = user.preference_actor || [];
           this.getColdStartPreferences(this.genres, this.actors, 1000);
-        } else if (numReviews < 30) {
-          this.getContentBasedRecommendationsForUser();
-        } else {
+        } 
+        /*   this.getContentBasedRecommendationsForUser(); */
+        else {
           this.getHybridRecommendations();
         }
       },
@@ -165,20 +165,26 @@ export class HomeComponent implements OnInit {
   }
 
   getColdStartPreferences(genres: string[], actors: string[], limit: number): void {
-    this.moviesService.getColdStartRecommendations(genres, actors, limit).subscribe({
+    const userId = this.user?._id || this.user?.id;
+    if (!userId) {
+      console.error('❌ User ID ausente para Cold Start');
+      return;
+    }
+  
+    this.moviesService.getColdStartRecommendations(genres, actors, userId, limit).subscribe({
       next: (result) => {
         console.log('Cold Start Recommendations:', result);
         this.groupedColdStart = this.orderGroupsByPreferences(
           this.groupMoviesByGenre(result),
           this.user?.preference_genre || []
         );
-        
       },
       error: (err) => {
-        console.error('Error fetching content based on preferences:', err);
+        console.error('Error fetching cold start recommendations:', err);
       },
     });
   }
+  
 
   groupMoviesByGenre(movies: Movie[]): { genre: string; slides: Movie[][] }[] {
     const genreMap = new Map<string, Movie[]>();

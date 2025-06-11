@@ -21,7 +21,6 @@ from fastapi import Query, Path
 import traceback
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from utils.colaborative_als import build_als_training_data, build_als_model, recommend_movies_als
 logger = logging.getLogger("hybrid_recommendation")
 import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -161,16 +160,16 @@ async def update_preferences(preferences: dict):
 
 @app.get("/movies/cold_start_recommendations", response_model=List[dict])
 async def cold_start_recommendations(
+    user_id: str = Query(...),
     genres: List[str] = Query(..., min_length=1),
     actors: List[str] = Query(..., min_length=1),
     top_n: int = 1000
 ):
     try:
-        return await cold_start_python_filter(movies_collection, genres, actors, top_n)
+        return await cold_start_python_filter(movies_collection, genres, actors, user_id, top_n)
     except Exception as e:
         print("🔥 ERRO NO BACKEND:", traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/movies/search", response_model=List[dict])
 async def search_movies_by_name(name: str = Query(..., min_length=1)):
@@ -273,6 +272,8 @@ async def collaborative_recommendations(user_id: str = Query(...)):
         raise HTTPException(status_code=500, detail="Erro no sistema de recomendação colaborativo.")
         """
 
+
+
 @app.get("/movies/hybrid_recommendations", response_model=List[dict])
 async def hybrid_recommendations(user_id: str = Query(...)):
     try:
@@ -284,30 +285,30 @@ async def hybrid_recommendations(user_id: str = Query(...)):
         ).to_list(None)
         reviewed_ids = {str(r["movie_id"]) for r in reviewed_movies_cursor}
 
-        # 2. ALS + Content-Based em paralelo
-        df_matrix_task = build_als_training_data()
+        # 2. Collaborative Filtering (Pearson) + Content-Based em paralelo
+        matrix_task = build_user_movie_matrix()
         content_task = get_content_based_recommendations(user_id)
-        (df, user_movie_matrix), content_based = await asyncio.gather(df_matrix_task, content_task)
+        user_movie_matrix, content_based = await asyncio.gather(matrix_task, content_task)
 
-        model, uid_map, mid_rev_map, als_matrix = build_als_model(df, user_movie_matrix)
-        als_recommendations = recommend_movies_als(model, als_matrix, uid_map, mid_rev_map, user_id)
+        collaborative_ids = recommend_movies_for_user(user_movie_matrix, user_id)
+        collaborative_ids = [mid for mid in collaborative_ids if mid not in reviewed_ids]
+        collaborative_obj_ids = [ObjectId(mid) for mid in collaborative_ids]
 
-        # 3. Buscar detalhes dos filmes ALS que não foram avaliados
-        als_movie_ids = [ObjectId(mid) for mid, _ in als_recommendations if mid not in reviewed_ids]
         collaborative_movies = await movies_collection.find({
-            "_id": {"$in": als_movie_ids}
+            "_id": {"$in": collaborative_obj_ids}
         }).to_list(None)
 
-        score_map = dict(als_recommendations)
+        # 3. Preparar mapas de pontuação
         serialized_collab = []
         for m in collaborative_movies:
             movie = movie_serializer(m)
             movie["hybrid_score"] = 0.7
-            movie["als_score"] = score_map.get(str(m["_id"]), 0)
+            movie["collab_score"] = 1.0  # usar se quiseres mostrar
             serialized_collab.append(movie)
 
-        # 4. Mapear Content-Based
         combined_map = {}
+
+        # 4. Content-Based: aplicar 0.3 e mapear
         for group in content_based:
             for movie in group["top_movies"]:
                 movie_id = str(movie["id"])
@@ -315,7 +316,7 @@ async def hybrid_recommendations(user_id: str = Query(...)):
                     movie["hybrid_score"] = 0.3
                     combined_map[movie_id] = movie
 
-        # 5. Fundir com ALS
+        # 5. Fundir com Collaborative
         for movie in serialized_collab:
             movie_id = str(movie["id"])
             if movie_id not in reviewed_ids:
@@ -336,15 +337,11 @@ async def hybrid_recommendations(user_id: str = Query(...)):
 
         result = []
         for genre, movies in genre_map.items():
-            for m in movies:
-                m["popularity_score"] = m.get("users_review", 0)
-
             movies_sorted = sorted(
                 movies,
-                key=lambda x: (x.get("hybrid_score", 0), x.get("popularity_score", 0)),
+                key=lambda x: (x.get("hybrid_score", 0), x.get("users_review", 0)),
                 reverse=True
             )
-
             selected = movies_sorted[:10]
             existing_ids = {str(m["id"]) for m in selected}
 
@@ -470,5 +467,5 @@ async def get_movie_by_id(id: str = Path(..., title="Movie ID")):
 @app.get("/evaluate")
 async def trigger_evaluation():
     from utils.evaluation_runner import run_evaluation
-    await run_evaluation(top_n=10)
+    await run_evaluation(top_n=100)
     return {"message": "Evaluation completed"}
